@@ -25,7 +25,7 @@ export default function Navbar() {
 
           {/* === Links (PC) === */}
           <div className="hidden md:flex flex-1 justify-center space-x-8 items-center">
-            {['Inicio', 'General', 'Circuitos', 'Alertas', 'Blog'].map((item, i) => (
+            {['Inicio', 'General', 'Circuitos', 'Alertas', 'Historial', 'Blog'].map((item, i) => (
               <a
                 key={i}
                 href={`/${item.toLowerCase() === 'inicio' ? '' : item.toLowerCase()}`}

@@ -84,7 +84,8 @@ const dataPorCircuito = {
     resumenDiario: { max: 8, promedio: 5.5, estado: 'Normal' },
     resumenComparacion: { hoy: 6.5, ayer: 7.0, diferencia: '-7%' },
     resumenCosto: { max: 180, promedio: 120, estado: 'Bajo' },
-  },c3: {
+  },
+  c3: {
     potencia: [
       { time: '10:00', potencia: 80 },
       { time: '10:05', potencia: 100 },
@@ -155,31 +156,43 @@ export default function Circuitos() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.8 }}
         viewport={{ once: true }}
-        className="flex gap-6 justify-center flex-wrap">
+        className="grid md:grid-cols-3 gap-6"
+      >
         {circuitos.map((c) => (
-          <div
+          <Card
             key={c.id}
             onClick={() => setSelectedCircuit(c.id)}
-            className={`cursor-pointer p-6 w-44 h-36 rounded-xl flex flex-col justify-between shadow-lg transition-all
-        ${
-          selectedCircuit === c.id
-            ? 'border-4 border-blue-500 bg-gray-800'
-            : 'border border-gray-700 bg-gray-900 hover:bg-gray-800'
-        }`}
+            className={`cursor-pointer bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl text-center p-6 transition-all ${
+              selectedCircuit === c.id ? 'ring-4 ring-blue-500' : 'hover:bg-gray-800'
+            }`}
           >
-            <h3 className="text-xl font-bold text-center">{c.nombre}</h3>
+            {/* Nombre del circuito */}
+            <h3 className="text-lg text-gray-300">{c.nombre}</h3>
+
+            {/* Estado destacado */}
+            <p
+              className={`text-3xl font-bold mt-3 ${
+                circuitState[c.id] ? 'text-green-400' : 'text-red-400'
+              }`}
+            >
+              {circuitState[c.id] ? 'Encendido' : 'Apagado'}
+            </p>
+
+            {/* Botón de cambio de estado */}
             <button
               onClick={(e) => {
                 e.stopPropagation()
                 setCircuitState((prev) => ({ ...prev, [c.id]: !prev[c.id] }))
               }}
-              className={`mt-2 px-4 py-2 rounded-lg font-semibold w-full ${
-                circuitState[c.id] ? 'bg-green-600' : 'bg-red-600'
+              className={`mt-4 px-4 py-2 rounded-lg font-semibold w-full transition ${
+                circuitState[c.id]
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : 'bg-red-600 hover:bg-red-700'
               }`}
             >
-              {circuitState[c.id] ? 'Encendido' : 'Apagado'}
+              {circuitState[c.id] ? 'Apagar' : 'Encender'}
             </button>
-          </div>
+          </Card>
         ))}
       </motion.div>
 
@@ -189,7 +202,8 @@ export default function Circuitos() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.8 }}
         viewport={{ once: true }}
-        className="grid md:grid-cols-3 gap-6">
+        className="grid md:grid-cols-3 gap-6"
+      >
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl text-center p-6">
           <h3 className="text-lg text-gray-300">Voltaje</h3>
           <p className="text-3xl font-bold text-blue-400">118 V</p>
@@ -210,7 +224,8 @@ export default function Circuitos() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.8 }}
         viewport={{ once: true }}
-        className="grid md:grid-cols-10 gap-6">
+        className="grid md:grid-cols-10 gap-6"
+      >
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl md:col-span-3 order-2 md:order-1">
           <CardContent className="p-6 w-full flex flex-col items-center">
             <h3 className="text-xl font-semibold text-blue-300 mb-6">Resumen</h3>
@@ -263,7 +278,8 @@ export default function Circuitos() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.8 }}
         viewport={{ once: true }}
-        className="grid md:grid-cols-10 gap-6">
+        className="grid md:grid-cols-10 gap-6"
+      >
         <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-none shadow-xl md:col-span-3 order-2 md:order-1">
           <CardContent className="p-6 w-full">
             <h3 className="text-xl font-semibold text-blue-300 mb-4 text-center">Resumen Diario</h3>
@@ -311,7 +327,8 @@ export default function Circuitos() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.8 }}
         viewport={{ once: true }}
-        className="grid md:grid-cols-10 gap-6 mt-10">
+        className="grid md:grid-cols-10 gap-6 mt-10"
+      >
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl md:col-span-3 order-2 md:order-1">
           <CardContent className="p-6 w-full flex flex-col items-center">
             <h3 className="text-xl font-semibold text-blue-300 mb-6">Resumen Comparación</h3>
@@ -360,7 +377,8 @@ export default function Circuitos() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.8 }}
         viewport={{ once: true }}
-        className="grid md:grid-cols-10 gap-6 mt-10">
+        className="grid md:grid-cols-10 gap-6 mt-10"
+      >
         <Card className="bg-gradient-to-br from-zinc-800 to-zinc-900 border-none shadow-xl md:col-span-3 order-2 md:order-1">
           <CardContent className="p-6 w-full flex flex-col items-center">
             <h3 className="text-xl font-semibold text-blue-300 mb-6">Resumen Costo</h3>
