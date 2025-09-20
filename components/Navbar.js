@@ -25,7 +25,7 @@ export default function Navbar() {
 
           {/* === Links (PC) === */}
           <div className="hidden md:flex flex-1 justify-center space-x-8 items-center">
-            {['Inicio', 'General', 'Circuitos', 'Alertas', 'Historial', 'Blog'].map((item, i) => (
+            {['Inicio', 'General', 'Circuitos', 'Alertas', 'Historial'].map((item, i) => (
               <a
                 key={i}
                 href={`/${item.toLowerCase() === 'inicio' ? '' : item.toLowerCase()}`}
@@ -64,7 +64,7 @@ export default function Navbar() {
       {/* === Menú móvil === */}
       {open && (
         <div className="md:hidden bg-gray-900/95 px-4 pt-2 pb-4 space-y-3 animate-fadeIn">
-          {['Inicio', 'General', 'Circuitos', 'Alertas', 'Blog'].map((item, i) => (
+          {['Inicio', 'General', 'Circuitos', 'Alertas', 'Historial'].map((item, i) => (
             <a
               key={i}
               href={`/${item.toLowerCase() === 'inicio' ? '' : item.toLowerCase()}`}
