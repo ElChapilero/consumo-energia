@@ -1,6 +1,6 @@
 'use client'
-
-import { useState } from 'react'
+import { supabase } from '@/lib/supabaseClient'
+import { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { motion } from 'framer-motion'
 import {
@@ -15,127 +15,161 @@ import {
   Bar,
 } from 'recharts'
 
-// --- Datos simulados por circuito ---
-const circuitos = [
-  { id: 'c1', nombre: 'Circuito 1' },
-  { id: 'c2', nombre: 'Circuito 2' },
-  { id: 'c3', nombre: 'Circuito 3' },
-]
-
-const dataPorCircuito = {
-  c1: {
-    potencia: [
-      { time: '10:00', potencia: 120 },
-      { time: '10:05', potencia: 180 },
-      { time: '10:10', potencia: 90 },
-      { time: '10:15', potencia: 220 },
-    ],
-    energia: [
-      { name: 'Lunes', energia: 4 },
-      { name: 'Martes', energia: 3.2 },
-      { name: 'Miércoles', energia: 4.8 },
-      { name: 'Jueves', energia: 2.9 },
-    ],
-    comparacion: [
-      { hora: '08:00', hoy: 1.2, ayer: 1.0 },
-      { hora: '10:00', hoy: 2.0, ayer: 1.6 },
-      { hora: '12:00', hoy: 3.5, ayer: 2.8 },
-      { hora: '14:00', hoy: 4.2, ayer: 3.9 },
-    ],
-    consumoHora: [
-      { hora: '08:00', kwh: 0.3 },
-      { hora: '09:00', kwh: 0.25 },
-      { hora: '10:00', kwh: 0.4 },
-      { hora: '11:00', kwh: 0.2 },
-      { hora: '12:00', kwh: 0.35 },
-    ],
-    resumen: { max: 220, promedio: 152, estado: 'Medio' },
-    resumenDiario: { max: 12, promedio: 8.5, estado: 'Normal' },
-    resumenComparacion: { hoy: 10.9, ayer: 9.3, diferencia: '+17%' },
-    resumenCosto: { max: 260, promedio: 180, estado: 'Moderado' },
-  },
-  c2: {
-    potencia: [
-      { time: '10:00', potencia: 80 },
-      { time: '10:05', potencia: 100 },
-      { time: '10:10', potencia: 120 },
-      { time: '10:15', potencia: 90 },
-    ],
-    energia: [
-      { name: 'Lunes', energia: 2 },
-      { name: 'Martes', energia: 1.8 },
-      { name: 'Miércoles', energia: 2.2 },
-      { name: 'Jueves', energia: 1.5 },
-    ],
-    comparacion: [
-      { hora: '08:00', hoy: 0.8, ayer: 0.9 },
-      { hora: '10:00', hoy: 1.0, ayer: 1.2 },
-      { hora: '12:00', hoy: 1.5, ayer: 1.3 },
-      { hora: '14:00', hoy: 1.8, ayer: 1.6 },
-    ],
-    consumoHora: [
-      { hora: '08:00', kwh: 0.2 },
-      { hora: '09:00', kwh: 0.15 },
-      { hora: '10:00', kwh: 0.3 },
-      { hora: '11:00', kwh: 0.1 },
-      { hora: '12:00', kwh: 0.25 },
-    ],
-    resumen: { max: 150, promedio: 110, estado: 'Bajo' },
-    resumenDiario: { max: 8, promedio: 5.5, estado: 'Normal' },
-    resumenComparacion: { hoy: 6.5, ayer: 7.0, diferencia: '-7%' },
-    resumenCosto: { max: 180, promedio: 120, estado: 'Bajo' },
-  },
-  c3: {
-    potencia: [
-      { time: '10:00', potencia: 80 },
-      { time: '10:05', potencia: 100 },
-      { time: '10:10', potencia: 120 },
-      { time: '10:15', potencia: 90 },
-    ],
-    energia: [
-      { name: 'Lunes', energia: 2 },
-      { name: 'Martes', energia: 1.8 },
-      { name: 'Miércoles', energia: 2.2 },
-      { name: 'Jueves', energia: 1.5 },
-    ],
-    comparacion: [
-      { hora: '08:00', hoy: 0.8, ayer: 0.9 },
-      { hora: '10:00', hoy: 1.0, ayer: 1.2 },
-      { hora: '12:00', hoy: 1.5, ayer: 1.3 },
-      { hora: '14:00', hoy: 1.8, ayer: 1.6 },
-    ],
-    consumoHora: [
-      { hora: '08:00', kwh: 0.2 },
-      { hora: '09:00', kwh: 0.15 },
-      { hora: '10:00', kwh: 0.3 },
-      { hora: '11:00', kwh: 0.1 },
-      { hora: '12:00', kwh: 0.25 },
-    ],
-    resumen: { max: 150, promedio: 110, estado: 'Bajo' },
-    resumenDiario: { max: 8, promedio: 5.5, estado: 'Normal' },
-    resumenComparacion: { hoy: 6.5, ayer: 7.0, diferencia: '-7%' },
-    resumenCosto: { max: 180, promedio: 120, estado: 'Bajo' },
-  },
-  // Agrega más circuitos según necesites
+// --- Datos "vacíos" cuando no hay sesión ---
+const circuitoDemo = {
+  id: 'demo',
+  nombre: 'Circuito Demo',
+  potencia: [{ time: '00:00', potencia: 0 }],
+  energia: [{ name: 'Día', energia: 0 }],
+  comparacion: [{ hora: '00:00', hoy: 0, ayer: 0 }],
+  consumoHora: [{ hora: '00:00', kwh: 0 }],
+  resumen: { max: 0, promedio: 0, estado: 'Apagado' },
+  resumenDiario: { max: 0, promedio: 0, estado: 'Apagado' },
+  resumenComparacion: { hoy: 0, ayer: 0, diferencia: '0%' },
+  resumenCosto: { max: 0, promedio: 0, estado: 'Apagado' },
+  voltaje: 120,
+  corriente: 0,
+  frecuencia: 60,
 }
 
-const costoPorKWh = 650
+export default function Circuitos({ user }) {
+  const [circuitos, setCircuitos] = useState([])
+  const [dataPorCircuito, setDataPorCircuito] = useState({})
+  const [selectedCircuit, setSelectedCircuit] = useState(null)
 
-export default function Circuitos() {
-  const [selectedCircuit, setSelectedCircuit] = useState('c1')
-  const [circuitState, setCircuitState] = useState({
-    c1: true,
-    c2: false,
-    c3: false,
-  })
+  // 🔹 Helper para formatear $COP
+  function formatCOP(value) {
+    return `$${value.toLocaleString('es-CO')} COP`
+  }
+
+  useEffect(() => {
+    if (!user) {
+      // 🔹 Modo demo
+      setCircuitos([{ id_circuito: 'demo', nombre: 'Circuito Demo' }])
+      setDataPorCircuito({ demo: circuitoDemo })
+      setSelectedCircuit('demo')
+      return
+    }
+
+    async function loadCircuitos() {
+      // 🔹 Traer la tarifa vigente según la fecha actual y estrato
+      const { data: tarifaData, error: tarifaError } = await supabase
+        .from('tarifas')
+        .select('*')
+        .eq('estrato', 3) // <-- aquí podrías usar el estrato del usuario
+        .lte('fecha_inicio', new Date().toISOString())
+        .or(`fecha_fin.is.null,fecha_fin.gte.${new Date().toISOString()}`)
+        .order('fecha_inicio', { ascending: false })
+        .limit(1)
+
+      if (tarifaError) {
+        console.error('Error cargando tarifa', tarifaError)
+      }
+
+      const tarifa = tarifaData?.[0]
+
+      // 🔹 Calcular tarifa final (simple: COP/kWh)
+      let TARIFA = 500 // fallback si no hay tarifa en DB
+      if (tarifa) {
+        TARIFA = Number(tarifa.valor_kwh) // viene en COP/kWh
+      }
+
+      // 1. Traer circuitos del usuario
+      const { data: cData, error } = await supabase
+        .from('circuitos')
+        .select('id_circuito, nombre')
+        .eq('id_usuario', user.id)
+
+      if (error) {
+        console.error('Error cargando circuitos', error)
+        return
+      }
+
+      setCircuitos(cData)
+      if (!selectedCircuit && cData.length > 0) {
+        setSelectedCircuit(cData[0].id_circuito)
+      }
+
+      // 2. Por cada circuito, traer su última medición + historial
+      const results = {}
+      for (let c of cData) {
+        const { data: mData } = await supabase
+          .from('mediciones')
+          .select('*')
+          .eq('id_circuito', c.id_circuito)
+          .order('creado_en', { ascending: false })
+          .limit(1)
+
+        const { data: hData } = await supabase
+          .from('mediciones_historial')
+          .select('*')
+          .eq('id_mediciones', mData?.[0]?.id_mediciones || 0)
+          .order('creado_en')
+
+        const historial =
+          hData?.map((d) => ({
+            time: new Date(d.creado_en).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            potencia: d.potencia,
+          })) || []
+
+        const energia =
+          hData?.map((d) => ({
+            name: new Date(d.creado_en).toLocaleDateString(),
+            energia: d.energia,
+          })) || []
+
+        // 🔹 Cálculo de costos usando la tarifa final
+        const consumoHora =
+          hData?.map((d) => ({
+            hora: new Date(d.creado_en).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            kwh: d.energia,
+            costo: d.energia * TARIFA,
+          })) || []
+
+        const costos = consumoHora.map((d) => d.costo)
+
+        results[c.id_circuito] = {
+          potencia: historial,
+          energia: energia,
+          comparacion: [], // puedes llenarlo después
+          consumoHora,
+          resumen: {
+            max: Math.max(...(hData?.map((d) => d.potencia) || [0])),
+            promedio: hData?.reduce((acc, d) => acc + d.potencia, 0) / (hData?.length || 1),
+            estado: mData?.[0]?.potencia > 0 ? 'Encendido' : 'Apagado',
+          },
+          resumenCosto: {
+            max: Math.max(...costos, 0),
+            promedio: costos.length ? costos.reduce((a, b) => a + b, 0) / costos.length : 0,
+            estado: costos.some((c) => c > 0) ? 'Con consumo' : 'Apagado',
+          },
+          voltaje: mData?.[0]?.voltaje || 0,
+          corriente: mData?.[0]?.corriente || 0,
+          frecuencia: mData?.[0]?.frecuencia || 0,
+        }
+      }
+      setDataPorCircuito(results)
+    }
+
+    loadCircuitos()
+    // 🔹 Refrescar cada 10s para "tiempo real"
+    const interval = setInterval(loadCircuitos, 10000)
+    return () => clearInterval(interval)
+  }, [user, selectedCircuit])
+
+  // 🔹 Si aún no hay data cargada
+  if (!selectedCircuit) return <p className="text-white p-4">Cargando...</p>
+
   const data = dataPorCircuito[selectedCircuit]
 
-  // Calcular costo y acumulado
-  const consumoHoraConCosto = data.consumoHora.map((d, i, arr) => {
-    const costo = d.kwh * costoPorKWh
-    const acumulado = costo + (i > 0 ? arr[i - 1].acumulado : 0)
-    return { ...d, costo, acumulado }
-  })
+  // 🔹 Preparar data para gráfico de costo por hora
+  const consumoHoraConCosto = data?.consumoHora || []
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white px-4 sm:px-8 md:px-16 lg:px-24 pt-24 pb-20 space-y-10">
@@ -147,7 +181,7 @@ export default function Circuitos() {
         viewport={{ once: true }}
         className="text-4xl font-bold text-center text-blue-400"
       >
-        Panel de Circuitos - {circuitos.find((c) => c.id === selectedCircuit).nombre}
+        Panel de Circuitos - {circuitos.find((c) => c.id_circuito === selectedCircuit)?.nombre}
       </motion.h1>
 
       {/* Selector de circuitos */}
@@ -158,42 +192,33 @@ export default function Circuitos() {
         viewport={{ once: true }}
         className="grid md:grid-cols-3 gap-6"
       >
-        {circuitos.map((c) => (
-          <Card
-            key={c.id}
-            onClick={() => setSelectedCircuit(c.id)}
-            className={`cursor-pointer bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl text-center p-6 transition-all ${
-              selectedCircuit === c.id ? 'ring-4 ring-blue-500' : 'hover:bg-gray-800'
-            }`}
-          >
-            {/* Nombre del circuito */}
-            <h3 className="text-lg text-gray-300">{c.nombre}</h3>
+        {circuitos.map((c) => {
+          const resumen = dataPorCircuito[c.id_circuito || c.id]?.resumen
 
-            {/* Estado destacado */}
-            <p
-              className={`text-3xl font-bold mt-3 ${
-                circuitState[c.id] ? 'text-green-400' : 'text-red-400'
+          return (
+            <Card
+              key={c.id_circuito || c.id}
+              onClick={() => setSelectedCircuit(c.id_circuito || c.id)}
+              className={`cursor-pointer bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl text-center p-6 transition-all ${
+                selectedCircuit === (c.id_circuito || c.id)
+                  ? 'ring-4 ring-blue-500'
+                  : 'hover:bg-gray-800'
               }`}
             >
-              {circuitState[c.id] ? 'Encendido' : 'Apagado'}
-            </p>
+              {/* Nombre del circuito */}
+              <h3 className="text-lg text-gray-300">{c.nombre}</h3>
 
-            {/* Botón de cambio de estado */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                setCircuitState((prev) => ({ ...prev, [c.id]: !prev[c.id] }))
-              }}
-              className={`mt-4 px-4 py-2 rounded-lg font-semibold w-full transition ${
-                circuitState[c.id]
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-red-600 hover:bg-red-700'
-              }`}
-            >
-              {circuitState[c.id] ? 'Apagar' : 'Encender'}
-            </button>
-          </Card>
-        ))}
+              {/* Estado destacado */}
+              <p
+                className={`text-3xl font-bold mt-3 ${
+                  resumen?.estado === 'Encendido' ? 'text-green-400' : 'text-red-400'
+                }`}
+              >
+                {resumen?.estado || 'Apagado'}
+              </p>
+            </Card>
+          )
+        })}
       </motion.div>
 
       {/* === Fila 1: Indicadores simples === */}
@@ -206,15 +231,17 @@ export default function Circuitos() {
       >
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl text-center p-6">
           <h3 className="text-lg text-gray-300">Voltaje</h3>
-          <p className="text-3xl font-bold text-blue-400">118 V</p>
+          <p className="text-3xl font-bold text-blue-400">{data?.voltaje ?? 0} V</p>
         </Card>
+
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl text-center p-6">
           <h3 className="text-lg text-gray-300">Corriente</h3>
-          <p className="text-3xl font-bold text-green-400">5.2 A</p>
+          <p className="text-3xl font-bold text-green-400">{data?.corriente ?? 0} A</p>
         </Card>
+
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl text-center p-6">
           <h3 className="text-lg text-gray-300">Frecuencia</h3>
-          <p className="text-3xl font-bold text-yellow-400">60 Hz</p>
+          <p className="text-3xl font-bold text-yellow-400">{data?.frecuencia ?? 0} Hz</p>
         </Card>
       </motion.div>
 
@@ -250,10 +277,14 @@ export default function Circuitos() {
             <h2 className="text-xl font-semibold mb-4 text-blue-300">Potencia Activa (W)</h2>
             <ResponsiveContainer width="100%" height={250}>
               <LineChart
-                data={data.potencia.map((d) => ({
-                  ...d,
-                  potencia: circuitState[selectedCircuit] ? d.potencia : 0,
-                }))}
+                data={
+                  data?.potencia
+                    ? data.potencia.map((d) => ({
+                        ...d,
+                        potencia: data.resumen.estado === 'Encendido' ? d.potencia : 0,
+                      }))
+                    : []
+                }
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#444" />
                 <XAxis dataKey="time" stroke="#ccc" />
@@ -287,29 +318,30 @@ export default function Circuitos() {
               <div className="bg-slate-800/60 rounded-lg p-4 w-full text-center shadow-inner">
                 <span className="text-sm text-gray-400">Máxima</span>
                 <span className="block text-2xl font-bold text-green-400">
-                  {data.resumenDiario.max} kWh
+                  {data?.resumenDiario?.max ?? 0} kWh
                 </span>
               </div>
               <div className="bg-slate-800/60 rounded-lg p-4 w-full text-center shadow-inner">
                 <span className="text-sm text-gray-400">Promedio</span>
                 <span className="block text-2xl font-bold text-blue-400">
-                  {data.resumenDiario.promedio} kWh
+                  {data?.resumenDiario?.promedio ?? 0} kWh
                 </span>
               </div>
               <div className="bg-slate-800/60 rounded-lg p-4 w-full text-center shadow-inner">
                 <span className="text-sm text-gray-400">Estado</span>
                 <span className="block text-2xl font-bold text-yellow-400">
-                  {data.resumenDiario.estado}
+                  {data?.resumenDiario?.estado ?? 'Apagado'}
                 </span>
               </div>
             </div>
           </CardContent>
         </Card>
+
         <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-none shadow-xl md:col-span-7 order-1 md:order-2">
           <CardContent className="p-6">
             <h2 className="text-xl font-semibold mb-4 text-blue-300">Energía (kWh) por día</h2>
             <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={data.energia}>
+              <BarChart data={data?.energia || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#444" />
                 <XAxis dataKey="name" stroke="#ccc" />
                 <YAxis stroke="#ccc" />
@@ -329,6 +361,7 @@ export default function Circuitos() {
         viewport={{ once: true }}
         className="grid md:grid-cols-10 gap-6 mt-10"
       >
+        {/* Tarjeta Resumen Comparación */}
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl md:col-span-3 order-2 md:order-1">
           <CardContent className="p-6 w-full flex flex-col items-center">
             <h3 className="text-xl font-semibold text-blue-300 mb-6">Resumen Comparación</h3>
@@ -354,6 +387,8 @@ export default function Circuitos() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Gráfico Hoy vs Ayer */}
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl md:col-span-7 order-1 md:order-2">
           <CardContent className="p-6">
             <h2 className="text-xl font-semibold mb-4 text-blue-300">Consumo: Hoy vs. Ayer</h2>
@@ -379,39 +414,45 @@ export default function Circuitos() {
         viewport={{ once: true }}
         className="grid md:grid-cols-10 gap-6 mt-10"
       >
+        {/* Tarjeta Resumen Costo */}
         <Card className="bg-gradient-to-br from-zinc-800 to-zinc-900 border-none shadow-xl md:col-span-3 order-2 md:order-1">
           <CardContent className="p-6 w-full flex flex-col items-center">
             <h3 className="text-xl font-semibold text-blue-300 mb-6">Resumen Costo</h3>
             <div className="flex flex-col gap-6 w-full">
               <div className="bg-zinc-900/60 rounded-lg p-4 flex flex-col items-center shadow-inner">
                 <span className="text-sm text-gray-400">Máximo</span>
-                <span className="text-2xl font-bold text-green-400">${data.resumenCosto.max}</span>
+                <span className="text-2xl font-bold text-green-400">
+                  {formatCOP(data?.resumenCosto?.max ?? 0)}
+                </span>
               </div>
               <div className="bg-zinc-900/60 rounded-lg p-4 flex flex-col items-center shadow-inner">
                 <span className="text-sm text-gray-400">Promedio</span>
                 <span className="text-2xl font-bold text-blue-400">
-                  ${data.resumenCosto.promedio}
+                  {formatCOP(data?.resumenCosto?.promedio ?? 0)}
                 </span>
               </div>
               <div className="bg-zinc-900/60 rounded-lg p-4 flex flex-col items-center shadow-inner">
                 <span className="text-sm text-gray-400">Estado</span>
                 <span className="text-2xl font-bold text-yellow-400">
-                  {data.resumenCosto.estado}
+                  {data?.resumenCosto?.estado ?? 'Sin datos'}
                 </span>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Gráfico de Gasto */}
         <Card className="bg-gradient-to-br from-zinc-800 to-zinc-900 border-none shadow-xl md:col-span-7 order-1 md:order-2">
           <CardContent className="p-6">
             <h2 className="text-xl font-semibold mb-4 text-blue-300">Gasto por hora ($COP)</h2>
             <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={consumoHoraConCosto}>
+              <BarChart data={consumoHoraConCosto || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#444" />
                 <XAxis dataKey="hora" stroke="#ccc" />
-                <YAxis stroke="#ccc" />
-                <Tooltip formatter={(v) => `$${v.toLocaleString('es-CO')} COP`} />
-                <Bar dataKey="costo" fill="#34d399" radius={[6, 6, 0, 0]} />
+                <YAxis stroke="#ccc" tickFormatter={(value) => formatCOP(value)} />
+                <Tooltip formatter={(value) => formatCOP(Number(value) || 0)} />
+
+                <Bar dataKey="costo" fill="#34d399" radius={[6, 6, 0, 0]} name="Costo (COP)" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

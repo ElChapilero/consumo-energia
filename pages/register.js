@@ -3,15 +3,42 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 export default function Register() {
+  const supabase = createClientComponentClient()
+
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log('Registro con:', { name, email, password })
+    setError('')
+    setSuccess('')
+    setLoading(true)
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name }, // se guarda en user_metadata
+      },
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      setSuccess('Registro exitoso. Revisa tu correo para confirmar la cuenta.')
+      setName('')
+      setEmail('')
+      setPassword('')
+    }
+
+    setLoading(false)
   }
 
   return (
@@ -63,11 +90,15 @@ export default function Register() {
 
           <button
             type="submit"
+            disabled={loading}
             className="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 transition font-semibold text-white shadow-lg"
           >
-            Registrarme
+            {loading ? 'Registrando...' : 'Registrarme'}
           </button>
         </form>
+
+        {error && <p className="text-red-400 text-center mt-4">{error}</p>}
+        {success && <p className="text-green-400 text-center mt-4">{success}</p>}
 
         <p className="text-gray-400 text-center mt-4">
           ¿Ya tienes cuenta?{' '}

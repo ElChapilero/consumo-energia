@@ -1,13 +1,37 @@
+'use client'
 import { useState, useEffect } from 'react'
 import { Menu, X } from 'lucide-react'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [user, setUser] = useState(null)
 
   useEffect(() => {
     setLoaded(true)
+
+    // Cargar usuario actual
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+    }
+    getUser()
+
+    // Escuchar cambios de sesión
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null)
+    })
+
+    return () => {
+      listener.subscription.unsubscribe()
+    }
   }, [])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+  }
 
   return (
     <nav
@@ -36,20 +60,34 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* === Botones sesión (PC) === */}
+          {/* === Sesión (PC) === */}
           <div className="hidden md:flex items-center space-x-4">
-            <a
-              href="/login"
-              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-400 transition duration-300 hover:scale-105"
-            >
-              Log in
-            </a>
-            <a
-              href="/register"
-              className="border border-blue-400 px-4 py-2 rounded-md hover:bg-blue-400 hover:text-black transition duration-300 hover:scale-105"
-            >
-              Sign up
-            </a>
+            {user ? (
+              <>
+                <span className="text-gray-300">👋 {user.email}</span>
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-400 transition duration-300 hover:scale-105"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <a
+                  href="/login"
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-400 transition duration-300 hover:scale-105"
+                >
+                  Log in
+                </a>
+                <a
+                  href="/register"
+                  className="border border-blue-400 px-4 py-2 rounded-md hover:bg-blue-400 hover:text-black transition duration-300 hover:scale-105"
+                >
+                  Sign up
+                </a>
+              </>
+            )}
           </div>
 
           {/* === Botón menú móvil === */}
@@ -73,18 +111,33 @@ export default function Navbar() {
               {item}
             </a>
           ))}
-          <a
-            href="/login"
-            className="block bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-400 transition duration-300"
-          >
-            Log in
-          </a>
-          <a
-            href="/register"
-            className="block border border-blue-400 px-3 py-2 rounded-md hover:bg-blue-400 hover:text-black transition duration-300"
-          >
-            Sign up
-          </a>
+
+          {user ? (
+            <>
+              <span className="block text-gray-300">👋 {user.email}</span>
+              <button
+                onClick={handleLogout}
+                className="block w-full bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-400 transition duration-300"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <a
+                href="/login"
+                className="block bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-400 transition duration-300"
+              >
+                Log in
+              </a>
+              <a
+                href="/register"
+                className="block border border-blue-400 px-3 py-2 rounded-md hover:bg-blue-400 hover:text-black transition duration-300"
+              >
+                Sign up
+              </a>
+            </>
+          )}
         </div>
       )}
     </nav>

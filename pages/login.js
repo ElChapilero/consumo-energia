@@ -3,14 +3,39 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 export default function Login() {
+  const supabase = createClientComponentClient()
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log('Login con:', { email, password })
+    setError('')
+    setSuccess('')
+    setLoading(true)
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      setSuccess('Inicio de sesión exitoso ✅')
+      setEmail('')
+      setPassword('')
+      // aquí puedes redirigir al dashboard
+      // window.location.href = '/dashboard'
+    }
+
+    setLoading(false)
   }
 
   return (
@@ -51,11 +76,15 @@ export default function Login() {
 
           <button
             type="submit"
+            disabled={loading}
             className="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-700 transition font-semibold text-white shadow-lg"
           >
-            Entrar
+            {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
+
+        {error && <p className="text-red-400 text-center mt-4">{error}</p>}
+        {success && <p className="text-green-400 text-center mt-4">{success}</p>}
 
         <p className="text-gray-400 text-center mt-4">
           ¿No tienes cuenta?{' '}
