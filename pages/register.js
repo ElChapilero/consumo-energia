@@ -3,11 +3,9 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { supabase } from '@/lib/supabaseClient'
 
 export default function Register() {
-  const supabase = createClientComponentClient()
-
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -21,16 +19,16 @@ export default function Register() {
     setSuccess('')
     setLoading(true)
 
-    const { data, error } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name }, // se guarda en user_metadata
+        data: { name }, // 👈 correcto
       },
     })
 
-    if (error) {
-      setError(error.message)
+    if (signUpError) {
+      setError(signUpError.message)
     } else {
       setSuccess('Registro exitoso. Revisa tu correo para confirmar la cuenta.')
       setName('')
@@ -49,9 +47,7 @@ export default function Register() {
         transition={{ duration: 0.6 }}
         className="bg-gray-900 p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-700"
       >
-        <h2 className="text-3xl font-bold text-center text-blue-400 mb-6">
-          Crear Cuenta
-        </h2>
+        <h2 className="text-3xl font-bold text-center text-blue-400 mb-6">Crear Cuenta</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

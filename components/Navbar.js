@@ -11,14 +11,14 @@ export default function Navbar() {
   useEffect(() => {
     setLoaded(true)
 
-    // Cargar usuario actual
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
+    // ✅ Cargar sesión actual (mejor que getUser)
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      setUser(session?.user || null)
     }
-    getUser()
+    getSession()
 
-    // Escuchar cambios de sesión
+    // ✅ Escuchar cambios de sesión
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null)
     })
