@@ -4,19 +4,18 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { Card, CardContent } from '@/components/ui/card'
 import { motion } from 'framer-motion'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-} from 'recharts'
+import ResumenCard from '@/components/dashboard/ResumenCard'
+import ChartLine from '@/components/dashboard/ChartLine'
+import ChartBarEnergia from '@/components/dashboard/ChartBarEnergia'
+import ResumenEnergia from '@/components/dashboard/ResumenEnergia'
+import ChartComparacionConsumo from '@/components/dashboard//ChartComparacionConsumo'
+import ResumenComparacionConsumo from '@/components/dashboard//ResumenComparacionConsumo'
+import ChartCostoHora from '@/components/dashboard/ChartCostoHora'
+import ResumenCostoHora from '@/components/dashboard/ResumenCostoHora'
+import IndicadoresBasicos from '@/components/dashboard/IndicadoresBasicos'
 
 export default function General() {
+  const [session, setSession] = useState(null)
   const [user, setUser] = useState(null)
   const [data, setData] = useState({
     resumen: { max: 0, promedio: 0, estado: 'Apagado' },
@@ -26,86 +25,203 @@ export default function General() {
     resumenComparacion: { hoy: 0, ayer: 0, diferencia: '0%' },
     comparacion: [],
     resumenCosto: { max: 0, promedio: 0, estado: 'Estable' },
+    voltaje: 0,
+    corriente: 0,
+    frecuencia: 0,
     ultimo: null,
   })
   const [consumoHoraConCosto, setConsumoHoraConCosto] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  // === Verifica sesión y carga datos ===
   useEffect(() => {
-    const checkUser = async () => {
+    const init = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession()
-      setUser(session?.user || null)
+      setSession(session)
 
-      if (session?.user) {
-        await loadMedicionesGeneral(session.user.id)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      setUser(user)
+
+      if (user) {
+        await loadDatos(user)
       }
+      setLoading(false)
     }
-    checkUser()
+    init()
   }, [])
 
-  // === Cargar mediciones generales del usuario ===
-  const loadMedicionesGeneral = async (idUsuario) => {
-    const { data: medicionesData, error } = await supabase
-      .from('mediciones_general')
+  const loadDatos = async (user) => {
+    const { data: circuitos } = await supabase
+      .from('circuitos')
+      .select('id')
+      .eq('id_usuario', user.id)
+
+    if (!circuitos || circuitos.length === 0) return
+    const circuitosIds = circuitos.map((c) => c.id)
+
+    const { data: medicionesDataRaw } = await supabase
+      .from('mediciones')
       .select(
-        'timestamp, voltaje_avg, corriente_total, potencia_total, energia_total, fp_total, frecuencia'
+        'circuito_id, potencia, energia, voltaje, corriente, frecuencia, factor_potencia, created_at'
       )
-      .eq('id_usuario', idUsuario)
-      .order('timestamp', { ascending: true })
-      .limit(50)
+      .in('circuito_id', circuitosIds)
+      .order('created_at', { ascending: true })
 
-    if (error) {
-      console.error(error)
-      return
-    }
+    if (!medicionesDataRaw || medicionesDataRaw.length === 0) return
 
-    if (medicionesData.length > 0) {
-      const ultimo = medicionesData[medicionesData.length - 1]
+    const medicionesData = medicionesDataRaw.map((m) => ({
+      ...m,
+      created_at: new Date(m.created_at),
+    }))
+    medicionesData.sort((a, b) => a.created_at - b.created_at)
 
-      const potencias = medicionesData.map((m) => ({
-        time: new Date(m.timestamp).toLocaleTimeString(),
-        potencia: m.potencia_total,
-      }))
+    // === Potencia últimos 10 minutos ===
+    const now = new Date()
+    const windowMinutes = 10
+    const startTime = new Date(now.getTime() - (windowMinutes - 1) * 60_000)
 
-      const energia = medicionesData.map((m, i) => ({
-        name: i + 1,
-        energia: m.energia_total,
-      }))
-
-      setData({
-        resumen: {
-          max: Math.max(...medicionesData.map((m) => m.potencia_total)),
-          promedio:
-            medicionesData.reduce((a, b) => a + b.potencia_total, 0) / medicionesData.length,
-          estado: ultimo.potencia_total > 0 ? 'Encendido' : 'Apagado',
-        },
-        potencia: potencias,
-        resumenDiario: {
-          max: Math.max(...medicionesData.map((m) => m.energia_total)),
-          promedio: medicionesData.reduce((a, b) => a + b.energia_total, 0) / medicionesData.length,
-          estado: ultimo.energia_total > 0 ? 'Encendido' : 'Apagado',
-        },
-        energia,
-        resumenComparacion: { hoy: 0, ayer: 0, diferencia: '0%' }, // 🔧 se puede mejorar con query diaria
-        comparacion: [],
-        resumenCosto: { max: 0, promedio: 0, estado: 'Estable' },
-        ultimo,
+    const potenciaData = []
+    for (let i = 0; i < windowMinutes; i++) {
+      const t = new Date(startTime.getTime() + i * 60_000)
+      const medicion = medicionesData.find(
+        (m) =>
+          m.created_at.getFullYear() === t.getFullYear() &&
+          m.created_at.getMonth() === t.getMonth() &&
+          m.created_at.getDate() === t.getDate() &&
+          m.created_at.getHours() === t.getHours() &&
+          m.created_at.getMinutes() === t.getMinutes()
+      )
+      potenciaData.push({
+        time: t.toLocaleTimeString('es-CO', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+        }),
+        potencia: medicion ? medicion.potencia : 0,
       })
-
-      const costos = medicionesData.map((m) => ({
-        hora: new Date(m.timestamp).getHours(),
-        costo: (m.energia_total ?? 0) * 650, // tarifa fija COP
-      }))
-      setConsumoHoraConCosto(costos)
     }
+
+    // === Energía últimos 7 días ===
+    const energiaPorDiaMap = {}
+    medicionesData.forEach((m) => {
+      const key = m.created_at.toISOString().split('T')[0]
+      energiaPorDiaMap[key] = (energiaPorDiaMap[key] || 0) + (m.energia ?? 0)
+    })
+
+    const energiaArr = []
+    for (let d = 6; d >= 0; d--) {
+      const day = new Date()
+      day.setDate(day.getDate() - d)
+      const key = day.toISOString().split('T')[0]
+      const label = d === 0 ? 'Hoy' : day.toLocaleDateString('es-ES', { weekday: 'short' })
+      energiaArr.push({ name: label, energia: energiaPorDiaMap[key] || 0 })
+    }
+
+    const energiaUltimos7 = energiaArr.map((d) => d.energia)
+    const resumenDiarioMax = energiaUltimos7.length ? Math.max(...energiaUltimos7) : 0
+    const resumenDiarioAvg = energiaUltimos7.length
+      ? energiaUltimos7.reduce((a, b) => a + b, 0) / energiaUltimos7.length
+      : 0
+
+    // === Costos horarios ===
+    const today = new Date().toISOString().split('T')[0]
+    const { data: consumosHoy } = await supabase
+      .from('consumos_horarios')
+      .select('hora, costo')
+      .in('circuito_id', circuitosIds)
+      .eq('fecha', today)
+      .order('hora', { ascending: true })
+
+    const costosPorHora = Array.from({ length: 24 }, (_, h) => ({
+      hora: h,
+      costo: 0,
+    }))
+
+    if (consumosHoy) {
+      consumosHoy.forEach((c) => {
+        costosPorHora[c.hora].costo += Number(c.costo)
+      })
+    }
+
+    const horaActual = new Date().getHours()
+    const costosHastaAhora = costosPorHora.filter((c) => c.hora <= horaActual)
+    const resumenCostoMax = costosHastaAhora.length
+      ? Math.max(...costosHastaAhora.map((c) => c.costo))
+      : 0
+    const resumenCostoAvg = costosHastaAhora.length
+      ? costosHastaAhora.reduce((a, b) => a + b.costo, 0) / costosHastaAhora.length
+      : 0
+
+    // === Resumen potencia (solo hoy) ===
+    const inicioHoy = new Date()
+    inicioHoy.setHours(0, 0, 0, 0)
+    const medicionesHoy = medicionesData.filter((m) => m.created_at >= inicioHoy)
+
+    const maxPot = medicionesHoy.length
+      ? Math.max(...medicionesHoy.map((m) => Number(m.potencia)))
+      : 0
+    const avgPot = medicionesHoy.length
+      ? medicionesHoy.reduce((a, b) => a + Number(b.potencia), 0) / medicionesHoy.length
+      : 0
+
+    const ultimo = medicionesData[medicionesData.length - 1]
+
+    // === Comparación hoy vs ayer ===
+    const hoyKey = new Date().toISOString().split('T')[0]
+    const ayerKey = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
+    const energiaHoy = energiaPorDiaMap[hoyKey] || 0
+    const energiaAyer = energiaPorDiaMap[ayerKey] || 0
+    const diferencia =
+      energiaAyer === 0
+        ? '100%'
+        : (((energiaHoy - energiaAyer) / energiaAyer) * 100).toFixed(1) + '%'
+
+    setData({
+      resumen: {
+        max: maxPot,
+        promedio: avgPot,
+        estado: medicionesHoy.length > 0 ? 'Encendido' : 'Apagado',
+      },
+      potencia: potenciaData,
+      resumenDiario: {
+        max: resumenDiarioMax,
+        promedio: resumenDiarioAvg,
+        estado: energiaUltimos7.some((e) => e > 0) ? 'Encendido' : 'Apagado',
+      },
+      energia: energiaArr,
+      resumenComparacion: { hoy: energiaHoy, ayer: energiaAyer, diferencia },
+      comparacion: [
+        { name: 'Ayer', energia: energiaAyer },
+        { name: 'Hoy', energia: energiaHoy },
+      ],
+      resumenCosto: {
+        max: resumenCostoMax,
+        promedio: resumenCostoAvg,
+        estado: costosHastaAhora.some((c) => c.costo > 0) ? 'Estable' : 'Sin datos',
+      },
+      voltaje: ultimo?.voltaje ?? 0,
+      corriente: ultimo?.corriente ?? 0,
+      frecuencia: ultimo?.frecuencia ?? 0,
+      ultimo,
+    })
+
+    setConsumoHoraConCosto(costosPorHora)
   }
 
-  // === UI (idéntico a Circuitos.jsx pero sin selector de circuitos) ===
+  useEffect(() => {
+    if (!user) return
+    const interval = setInterval(() => loadDatos(user), 10000) // refresco cada 10s
+    return () => clearInterval(interval)
+  }, [user])
+
+  if (loading || !data) return <p className="p-4">Cargando...</p>
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white px-4 sm:px-8 md:px-16 lg:px-24 pt-24 pb-20 space-y-10">
-      {/* Título */}
       <motion.h1
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -113,38 +229,15 @@ export default function General() {
         viewport={{ once: true }}
         className="text-4xl font-bold text-center text-blue-400"
       >
-        Consumo General - Todos los Circuitos
+        Dashboard General - Todos los Circuitos
       </motion.h1>
 
       {/* === Fila 1: Indicadores simples === */}
-      <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.8 }}
-        viewport={{ once: true }}
-        className="grid md:grid-cols-3 gap-6"
-      >
-        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl text-center p-6">
-          <h3 className="text-lg text-gray-300">Voltaje</h3>
-          <p className="text-3xl font-bold text-blue-400">
-            {data.ultimo ? `${data.ultimo.voltaje.toFixed(1)} V` : '--'}
-          </p>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl text-center p-6">
-          <h3 className="text-lg text-gray-300">Corriente</h3>
-          <p className="text-3xl font-bold text-green-400">
-            {data.ultimo ? `${data.ultimo.corriente.toFixed(2)} A` : '--'}
-          </p>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl text-center p-6">
-          <h3 className="text-lg text-gray-300">Frecuencia</h3>
-          <p className="text-3xl font-bold text-yellow-400">
-            {data.ultimo ? `${data.ultimo.frecuencia.toFixed(0)} Hz` : '--'}
-          </p>
-        </Card>
-      </motion.div>
+      <IndicadoresBasicos
+        voltaje={data.voltaje}
+        corriente={data.corriente}
+        frecuencia={data.frecuencia}
+      />
 
       {/* === Fila 2: Resumen + Gráfica === */}
       <motion.div
@@ -156,46 +249,33 @@ export default function General() {
       >
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl md:col-span-3 order-2 md:order-1">
           <CardContent className="p-6 w-full flex flex-col items-center">
-            <h3 className="text-xl font-semibold text-blue-300 mb-6">Resumen</h3>
+            <h3 className="text-xl font-semibold text-blue-300 mb-6">Resumen Potencia</h3>
             <div className="flex flex-col gap-6 w-full">
-              <div className="bg-gray-900/60 rounded-lg p-4 flex flex-col items-center shadow-inner">
-                <span className="text-sm text-gray-400">Máxima</span>
-                <span className="text-2xl font-bold text-green-400">{data.resumen.max} W</span>
-              </div>
-              <div className="bg-gray-900/60 rounded-lg p-4 flex flex-col items-center shadow-inner">
-                <span className="text-sm text-gray-400">Promedio</span>
-                <span className="text-2xl font-bold text-blue-400">{data.resumen.promedio} W</span>
-              </div>
-              <div className="bg-gray-900/60 rounded-lg p-4 flex flex-col items-center shadow-inner">
-                <span className="text-sm text-gray-400">Estado</span>
-                <span className="text-2xl font-bold text-yellow-400">{data.resumen.estado}</span>
-              </div>
+              <ResumenCard
+                label="Máxima"
+                value={data.resumen.max ? data.resumen.max.toFixed(3) : 0}
+                unit="W"
+                color="text-green-400"
+              />
+              <ResumenCard
+                label="Promedio"
+                value={data.resumen.promedio ? data.resumen.promedio.toFixed(3) : 0}
+                unit="W"
+                color="text-blue-400"
+              />
+              <ResumenCard label="Estado" value={data.resumen.estado} color="text-yellow-400" />
             </div>
           </CardContent>
         </Card>
+
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl md:col-span-7 order-1 md:order-2">
           <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4 text-blue-300">Potencia Activa (W)</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart
-                data={data.potencia.map((d) => ({
-                  ...d,
-                  potencia: circuitState[selectedCircuit] ? d.potencia : 0,
-                }))}
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                <XAxis dataKey="time" stroke="#ccc" />
-                <YAxis stroke="#ccc" />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="potencia"
-                  stroke="#4ade80"
-                  strokeWidth={3}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <ChartLine
+              data={data.potencia}
+              dataKey="potencia"
+              title="Potencia Activa (W)"
+              color="#4ade80"
+            />
           </CardContent>
         </Card>
       </motion.div>
@@ -206,47 +286,18 @@ export default function General() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.8 }}
         viewport={{ once: true }}
-        className="grid md:grid-cols-10 gap-6"
+        className="grid md:grid-cols-10 gap-6 mt-10"
       >
-        <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-none shadow-xl md:col-span-3 order-2 md:order-1">
-          <CardContent className="p-6 w-full">
-            <h3 className="text-xl font-semibold text-blue-300 mb-4 text-center">Resumen Diario</h3>
-            <div className="flex flex-col items-center gap-4">
-              <div className="bg-slate-800/60 rounded-lg p-4 w-full text-center shadow-inner">
-                <span className="text-sm text-gray-400">Máxima</span>
-                <span className="block text-2xl font-bold text-green-400">
-                  {data.resumenDiario.max} kWh
-                </span>
-              </div>
-              <div className="bg-slate-800/60 rounded-lg p-4 w-full text-center shadow-inner">
-                <span className="text-sm text-gray-400">Promedio</span>
-                <span className="block text-2xl font-bold text-blue-400">
-                  {data.resumenDiario.promedio} kWh
-                </span>
-              </div>
-              <div className="bg-slate-800/60 rounded-lg p-4 w-full text-center shadow-inner">
-                <span className="text-sm text-gray-400">Estado</span>
-                <span className="block text-2xl font-bold text-yellow-400">
-                  {data.resumenDiario.estado}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-none shadow-xl md:col-span-7 order-1 md:order-2">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4 text-blue-300">Energía (kWh) por día</h2>
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={data.energia}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                <XAxis dataKey="name" stroke="#ccc" />
-                <YAxis stroke="#ccc" />
-                <Tooltip />
-                <Bar dataKey="energia" fill="#60a5fa" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <div className="md:col-span-3">
+          <ResumenEnergia
+            max={data.resumenDiario.max.toFixed(2)}
+            promedio={data.resumenDiario.promedio.toFixed(2)}
+            estado={data.resumenDiario.estado}
+          />
+        </div>
+        <div className="md:col-span-7">
+          <ChartBarEnergia data={data.energia} />
+        </div>
       </motion.div>
 
       {/* === Fila 4: Comparación día actual vs anterior === */}
@@ -257,46 +308,16 @@ export default function General() {
         viewport={{ once: true }}
         className="grid md:grid-cols-10 gap-6 mt-10"
       >
-        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl md:col-span-3 order-2 md:order-1">
-          <CardContent className="p-6 w-full flex flex-col items-center">
-            <h3 className="text-xl font-semibold text-blue-300 mb-6">Resumen Comparación</h3>
-            <div className="flex flex-col gap-6 w-full">
-              <div className="bg-gray-900/60 rounded-lg p-4 flex flex-col items-center shadow-inner">
-                <span className="text-sm text-gray-400">Consumo Hoy</span>
-                <span className="text-2xl font-bold text-green-400">
-                  {data.resumenComparacion.hoy} kWh
-                </span>
-              </div>
-              <div className="bg-gray-900/60 rounded-lg p-4 flex flex-col items-center shadow-inner">
-                <span className="text-sm text-gray-400">Consumo Ayer</span>
-                <span className="text-2xl font-bold text-red-400">
-                  {data.resumenComparacion.ayer} kWh
-                </span>
-              </div>
-              <div className="bg-gray-900/60 rounded-lg p-4 flex flex-col items-center shadow-inner">
-                <span className="text-sm text-gray-400">Diferencia</span>
-                <span className="text-2xl font-bold text-yellow-400">
-                  {data.resumenComparacion.diferencia}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl md:col-span-7 order-1 md:order-2">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4 text-blue-300">Consumo: Hoy vs. Ayer</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={data.comparacion}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                <XAxis dataKey="hora" stroke="#ccc" />
-                <YAxis stroke="#ccc" />
-                <Tooltip />
-                <Bar dataKey="hoy" fill="#34d399" name="Hoy" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="ayer" fill="#f87171" name="Ayer" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <div className="md:col-span-3">
+          <ResumenComparacionConsumo
+            hoy={data.resumenComparacion.hoy}
+            ayer={data.resumenComparacion.ayer}
+            diferencia={data.resumenComparacion.diferencia}
+          />
+        </div>
+        <div className="md:col-span-7">
+          <ChartComparacionConsumo data={data.comparacion} />
+        </div>
       </motion.div>
 
       {/* === Fila 5: Costo por hora === */}
@@ -307,43 +328,16 @@ export default function General() {
         viewport={{ once: true }}
         className="grid md:grid-cols-10 gap-6 mt-10"
       >
-        <Card className="bg-gradient-to-br from-zinc-800 to-zinc-900 border-none shadow-xl md:col-span-3 order-2 md:order-1">
-          <CardContent className="p-6 w-full flex flex-col items-center">
-            <h3 className="text-xl font-semibold text-blue-300 mb-6">Resumen Costo</h3>
-            <div className="flex flex-col gap-6 w-full">
-              <div className="bg-zinc-900/60 rounded-lg p-4 flex flex-col items-center shadow-inner">
-                <span className="text-sm text-gray-400">Máximo</span>
-                <span className="text-2xl font-bold text-green-400">${data.resumenCosto.max}</span>
-              </div>
-              <div className="bg-zinc-900/60 rounded-lg p-4 flex flex-col items-center shadow-inner">
-                <span className="text-sm text-gray-400">Promedio</span>
-                <span className="text-2xl font-bold text-blue-400">
-                  ${data.resumenCosto.promedio}
-                </span>
-              </div>
-              <div className="bg-zinc-900/60 rounded-lg p-4 flex flex-col items-center shadow-inner">
-                <span className="text-sm text-gray-400">Estado</span>
-                <span className="text-2xl font-bold text-yellow-400">
-                  {data.resumenCosto.estado}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-gradient-to-br from-zinc-800 to-zinc-900 border-none shadow-xl md:col-span-7 order-1 md:order-2">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4 text-blue-300">Gasto por hora ($COP)</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={consumoHoraConCosto}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                <XAxis dataKey="hora" stroke="#ccc" />
-                <YAxis stroke="#ccc" />
-                <Tooltip formatter={(v) => `$${v.toLocaleString('es-CO')} COP`} />
-                <Bar dataKey="costo" fill="#34d399" radius={[6, 6, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <div className="md:col-span-3">
+          <ResumenCostoHora
+            max={data.resumenCosto.max}
+            promedio={data.resumenCosto.promedio}
+            estado={data.resumenCosto.estado}
+          />
+        </div>
+        <div className="md:col-span-7">
+          <ChartCostoHora data={consumoHoraConCosto} />
+        </div>
       </motion.div>
     </div>
   )
