@@ -11,14 +11,14 @@ export default function Navbar() {
   useEffect(() => {
     setLoaded(true)
 
-    // ✅ Cargar sesión actual (mejor que getUser)
+    // Cargar sesión actual (mejor que getUser)
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user || null)
     }
     getSession()
 
-    // ✅ Escuchar cambios de sesión
+    // Escuchar cambios de sesión
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null)
     })
@@ -64,7 +64,7 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <>
-                <span className="text-gray-300">👋 {user.email}</span>
+                <span className="text-gray-300"> {user.email}</span>
                 <button
                   onClick={handleLogout}
                   className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-400 transition duration-300 hover:scale-105"
@@ -114,7 +114,7 @@ export default function Navbar() {
 
           {user ? (
             <>
-              <span className="block text-gray-300">👋 {user.email}</span>
+              <span className="block text-gray-300"> {user.email}</span>
               <button
                 onClick={handleLogout}
                 className="block w-full bg-red-500 text-white px-3 py-2 rounded-md hover:bg-red-400 transition duration-300"

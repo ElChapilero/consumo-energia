@@ -14,6 +14,19 @@ import ChartCostoHora from '@/components/dashboard/ChartCostoHora'
 import ResumenCostoHora from '@/components/dashboard/ResumenCostoHora'
 import IndicadoresBasicos from '@/components/dashboard/IndicadoresBasicos'
 
+const getLocalDateKey = (date) => {
+  return date
+    .toLocaleDateString('es-CO', {
+      timeZone: 'America/Bogota',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    })
+    .split('/')
+    .reverse()
+    .join('-') // yyyy-mm-dd
+}
+
 export default function Circuitos() {
   const [user, setUser] = useState(null)
   const [circuitos, setCircuitos] = useState([])
@@ -180,7 +193,7 @@ export default function Circuitos() {
       // === Energía: últimos 7 días ===
       const energiaPorDiaMap = {}
       medicionesData.forEach((m) => {
-        const key = m.created_at.toISOString().split('T')[0]
+        const key = getLocalDateKey(m.created_at)
         energiaPorDiaMap[key] = (energiaPorDiaMap[key] || 0) + (m.energia ?? 0)
       })
 
@@ -188,7 +201,7 @@ export default function Circuitos() {
       for (let d = 6; d >= 0; d--) {
         const day = new Date()
         day.setDate(day.getDate() - d)
-        const key = day.toISOString().split('T')[0]
+        const key = getLocalDateKey(day)
         const label = d === 0 ? 'Hoy' : day.toLocaleDateString('es-ES', { weekday: 'short' })
         energiaArr.push({ name: label, energia: energiaPorDiaMap[key] || 0 })
       }
@@ -203,7 +216,7 @@ export default function Circuitos() {
         : 0
 
       // === Costos por hora desde consumos_horarios ===
-      const today = new Date().toISOString().split('T')[0]
+      const today = getLocalDateKey(new Date())
 
       const { data: consumosHoy, error: errorConsumos } = await supabase
         .from('consumos_horarios')
@@ -257,8 +270,8 @@ export default function Circuitos() {
       const ultimo = medicionesData[medicionesData.length - 1]
 
       // === Comparación Hoy vs Ayer ===
-      const hoyKey = new Date().toISOString().split('T')[0]
-      const ayerKey = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      const hoyKey = getLocalDateKey(new Date())
+      const ayerKey = getLocalDateKey(new Date(Date.now() - 24 * 60 * 60 * 1000))
 
       const energiaHoy = energiaPorDiaMap[hoyKey] || 0
       const energiaAyer = energiaPorDiaMap[ayerKey] || 0
