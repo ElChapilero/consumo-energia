@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
-// === Datos simulados ===
+// Datos simulados
 const alertasRecientes = [
   { id: 1, circuito: 'C2', tipo: 'Pico de voltaje', detalle: '152 V a las 14:30', nivel: 'alto' },
   { id: 2, circuito: 'C3', tipo: 'Consumo excesivo', detalle: '2200 W', nivel: 'medio' },

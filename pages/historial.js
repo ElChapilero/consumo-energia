@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { supabase } from '@/lib/supabaseClient'
 import {
   LineChart,
   Line,
@@ -14,109 +15,149 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
-// ==== Datos de ejemplo ====
-const datosGeneral = [
-  {
-    fecha: '2025-09-01',
-    potencia: 120,
-    energia: 15,
-    consumo: 12,
-    gasto: 4800,
-    alerta: 'Sobrecarga',
-    numAlertas: 2,
-  },
-  {
-    fecha: '2025-09-02',
-    potencia: 150,
-    energia: 18,
-    consumo: 14,
-    gasto: 5600,
-    alerta: 'Normal',
-    numAlertas: 0,
-  },
-]
-
-const datosCircuito1 = [
-  {
-    fecha: '2025-09-01',
-    potencia: 80,
-    energia: 10,
-    consumo: 8,
-    gasto: 3200,
-    alerta: 'Pico',
-    numAlertas: 1,
-  },
-  {
-    fecha: '2025-09-02',
-    potencia: 90,
-    energia: 12,
-    consumo: 9,
-    gasto: 3600,
-    alerta: 'Normal',
-    numAlertas: 0,
-  },
-]
-
-const datosCircuito2 = [
-  {
-    fecha: '2025-09-01',
-    potencia: 40,
-    energia: 5,
-    consumo: 4,
-    gasto: 1600,
-    alerta: 'Normal',
-    numAlertas: 0,
-  },
-  {
-    fecha: '2025-09-02',
-    potencia: 60,
-    energia: 6,
-    consumo: 5,
-    gasto: 2000,
-    alerta: 'Sobrecarga',
-    numAlertas: 1,
-  },
-]
-
 export default function Historial() {
   const [tab, setTab] = useState('general')
   const [filtro, setFiltro] = useState('dia')
-  const [metrica, setMetrica] = useState('consumo') // 👈 Estado de métrica
+  const [metrica, setMetrica] = useState('potencia')
   const [fechaInicio, setFechaInicio] = useState('2025-09-01')
   const [fechaFin, setFechaFin] = useState('2025-09-02')
+  const [data, setData] = useState([])
+  const [circuitos, setCircuitos] = useState([])
 
-  const getData = () => {
-    if (tab === 'general') return datosGeneral
-    if (tab === 'circuito1') return datosCircuito1
-    if (tab === 'circuito2') return datosCircuito2
-    return []
-  }
+  // Cargar circuitos del usuario
+  useEffect(() => {
+    const fetchCircuitos = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-  const exportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(getData())
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, tab.toUpperCase())
-    XLSX.writeFile(wb, `Historial_${tab}.xlsx`)
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from('circuitos')
+        .select('id, nombre')
+        .eq('id_usuario', user.id)
+
+      if (error) {
+        console.error('Error cargando circuitos:', error)
+      } else {
+        setCircuitos(data || [])
+      }
+    }
+
+    fetchCircuitos()
+  }, [])
+
+  // Cargar consumos según el tab (general o circuito) 
+  useEffect(() => {
+    const fetchData = async () => {
+      let query
+
+      if (tab === 'general') {
+        query = supabase
+          .from('consumos_horarios_general')
+          .select('*')
+          .gte('fecha', fechaInicio)
+          .lte('fecha', fechaFin)
+          .order('fecha', { ascending: true })
+          .order('hora', { ascending: true })
+      } else {
+        //  Datos de un solo circuito
+        query = supabase
+          .from('consumos_horarios')
+          .select(
+            `
+            circuito_id,
+            fecha,
+            hora,
+            energia,
+            costo,
+            potencia,
+            voltaje,
+            corriente,
+            frecuencia,
+            factor_potencia,
+            num_alertas
+          `
+          )
+          .gte('fecha', fechaInicio)
+          .lte('fecha', fechaFin)
+          .eq('circuito_id', tab)
+          .order('fecha', { ascending: true })
+          .order('hora', { ascending: true })
+      }
+
+      const { data, error } = await query
+      if (error) {
+        console.error('Error cargando consumos:', error)
+      } else {
+        const transformados = data.map((d) => ({
+          ...d,
+          fecha: `${d.fecha} ${String(d.hora).padStart(2, '0')}:00`,
+          gasto: d.costo || 0,
+          potenciaPromedio: d.potencia || 0,
+          numAlertas: d.num_alertas || 0,
+          alerta: (d.num_alertas || 0) > 0 ? 'Sobrecarga' : 'Normal',
+        }))
+        setData(transformados)
+      }
+    }
+
+    fetchData()
+  }, [tab, fechaInicio, fechaFin])
+
+  // Exportar CSV 
+  const exportToCSV = () => {
+    if (!data.length) return
+
+    const headers = Object.keys(data[0]).join(',')
+    const rows = data.map((obj) =>
+      Object.values(obj)
+        .map((val) => `"${val}"`)
+        .join(',')
+    )
+    const csvContent = [headers, ...rows].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute('download', `Historial_${tab}.csv`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white px-4 sm:px-8 md:px-16 lg:px-24 pt-24 pb-20 space-y-10">
       <h1 className="text-4xl font-bold text-center text-blue-400">Historial Energético</h1>
 
-      {/* === Tabs === */}
-      <div className="grid grid-cols-3 gap-4 mb-8 max-w-2xl mx-auto">
-        {['general', 'circuito1', 'circuito2'].map((t) => (
+      {/* === Tabs dinámicos === */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 max-w-4xl mx-auto">
+        <button
+          onClick={() => setTab('general')}
+          className={`p-4 rounded-xl font-semibold shadow-lg transition text-lg
+          ${
+            tab === 'general'
+              ? 'bg-blue-600 text-white ring-4 ring-blue-400'
+              : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+          }`}
+        >
+          General
+        </button>
+
+        {circuitos.map((c) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={c.id}
+            onClick={() => setTab(c.id)}
             className={`p-4 rounded-xl font-semibold shadow-lg transition text-lg
-        ${
-          tab === t
-            ? 'bg-blue-600 text-white ring-4 ring-blue-400'
-            : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-        }`}
+            ${
+              tab === c.id
+                ? 'bg-blue-600 text-white ring-4 ring-blue-400'
+                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+            }`}
           >
-            {t.charAt(0).toUpperCase() + t.slice(1)}
+            {c.nombre}
           </button>
         ))}
       </div>
@@ -124,19 +165,19 @@ export default function Historial() {
       {/* === Gráfica === */}
       <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-lg shadow-xl">
         <div className="flex justify-between items-center mb-4 flex-col md:flex-row">
-          {/* Selector de métrica */}
           <select
             value={metrica}
             onChange={(e) => setMetrica(e.target.value)}
             className="bg-gray-900 text-white p-2 rounded-md border border-gray-700"
           >
-            <option value="consumo">Consumo (kWh)</option>
-            <option value="gasto">Gasto ($)</option>
             <option value="potencia">Potencia Activa (W)</option>
             <option value="energia">Energía (kWh)</option>
+            <option value="voltaje">Voltaje (V)</option>
+            <option value="corriente">Corriente (A)</option>
+            <option value="frecuencia">Frecuencia (Hz)</option>
+            <option value="factor_potencia">Factor de Potencia</option>
+            <option value="gasto">Gasto ($)</option>
           </select>
-
-          {/* Selector de fechas */}
           <div className="flex space-x-2 mt-4 md:mt-0">
             <input
               type="date"
@@ -155,7 +196,7 @@ export default function Historial() {
 
         <ResponsiveContainer width="100%" height={300}>
           {metrica === 'gasto' ? (
-            <BarChart data={getData()}>
+            <BarChart data={data}>
               <CartesianGrid strokeDasharray="3 3" stroke="#444" />
               <XAxis dataKey="fecha" stroke="#ccc" />
               <YAxis stroke="#ccc" />
@@ -163,7 +204,7 @@ export default function Historial() {
               <Bar dataKey="gasto" fill="#60a5fa" />
             </BarChart>
           ) : (
-            <LineChart data={getData()}>
+            <LineChart data={data}>
               <CartesianGrid strokeDasharray="3 3" stroke="#444" />
               <XAxis dataKey="fecha" stroke="#ccc" />
               <YAxis stroke="#ccc" />
@@ -176,20 +217,11 @@ export default function Historial() {
 
       {/* === Filtros === */}
       <div className="flex justify-between items-center mb-4">
-        <select
-          value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
-          className="bg-gray-800 px-4 py-2 rounded-md"
-        >
-          <option value="dia">Por Día</option>
-          <option value="mes">Por Mes</option>
-        </select>
-
         <button
-          onClick={exportToExcel}
+          onClick={exportToCSV}
           className="bg-green-600 px-4 py-2 rounded-md hover:bg-green-700 transition"
         >
-          Descargar Excel
+          Descargar CSV
         </button>
       </div>
 
@@ -204,21 +236,27 @@ export default function Historial() {
             <thead className="bg-gradient-to-r from-gray-800 to-gray-900 text-gray-300">
               <tr>
                 <th className="p-3 border border-gray-700">Fecha</th>
-                <th className="p-3 border border-gray-700">Potencia Activa (W)</th>
+                <th className="p-3 border border-gray-700">Potencia (W)</th>
                 <th className="p-3 border border-gray-700">Energía (kWh)</th>
-                <th className="p-3 border border-gray-700">Consumo</th>
+                <th className="p-3 border border-gray-700">Voltaje (V)</th>
+                <th className="p-3 border border-gray-700">Corriente (A)</th>
+                <th className="p-3 border border-gray-700">Frecuencia (Hz)</th>
+                <th className="p-3 border border-gray-700">Factor de Potencia</th>
                 <th className="p-3 border border-gray-700">Gasto ($COP)</th>
                 <th className="p-3 border border-gray-700">Tipo de alerta</th>
                 <th className="p-3 border border-gray-700"># Alertas</th>
               </tr>
             </thead>
             <tbody>
-              {getData().map((d, i) => (
+              {data.map((d, i) => (
                 <tr key={i} className="hover:bg-gray-800/40 text-center transition">
                   <td className="p-2 border border-gray-700">{d.fecha}</td>
                   <td className="p-2 border border-gray-700">{d.potencia}</td>
                   <td className="p-2 border border-gray-700">{d.energia}</td>
-                  <td className="p-2 border border-gray-700">{d.consumo}</td>
+                  <td className="p-2 border border-gray-700">{d.voltaje}</td>
+                  <td className="p-2 border border-gray-700">{d.corriente}</td>
+                  <td className="p-2 border border-gray-700">{d.frecuencia}</td>
+                  <td className="p-2 border border-gray-700">{d.factor_potencia}</td>
                   <td className="p-2 border border-gray-700">${d.gasto}</td>
                   <td className="p-2 border border-gray-700">{d.alerta}</td>
                   <td className="p-2 border border-gray-700">{d.numAlertas}</td>

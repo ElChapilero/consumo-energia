@@ -30,8 +30,6 @@ export default function Login() {
       setSuccess('Inicio de sesión exitoso ✅')
       setEmail('')
       setPassword('')
-      // aquí puedes redirigir al dashboard
-      // window.location.href = '/dashboard'
     }
 
     setLoading(false)

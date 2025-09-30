@@ -23,7 +23,7 @@ export default function Register() {
       email,
       password,
       options: {
-        data: { name }, // 👈 correcto
+        data: { name },
       },
     })
 

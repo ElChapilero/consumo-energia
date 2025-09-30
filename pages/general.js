@@ -91,7 +91,7 @@ export default function General() {
     }))
     medicionesData.sort((a, b) => a.created_at - b.created_at)
 
-    // === Potencia últimos 10 minutos ===
+    // Potencia últimos 10 minutos
     const now = new Date()
     const windowMinutes = 10
     const startTime = new Date(now.getTime() - (windowMinutes - 1) * 60_000)
@@ -117,7 +117,7 @@ export default function General() {
       })
     }
 
-    // === Energía últimos 7 días ===
+    // Energía últimos 7 días
     const energiaPorDiaMap = {}
     medicionesData.forEach((m) => {
       const key = getLocalDateKey(m.created_at)
@@ -139,7 +139,7 @@ export default function General() {
       ? energiaUltimos7.reduce((a, b) => a + b, 0) / energiaUltimos7.length
       : 0
 
-    // === Costos horarios ===
+    // Costos horarios
     const today = getLocalDateKey(new Date())
     const { data: consumosHoy } = await supabase
       .from('consumos_horarios')
@@ -168,7 +168,7 @@ export default function General() {
       ? costosHastaAhora.reduce((a, b) => a + b.costo, 0) / costosHastaAhora.length
       : 0
 
-    // === Resumen potencia (solo hoy) ===
+    // Resumen potencia (solo hoy)
     const inicioHoy = new Date()
     inicioHoy.setHours(0, 0, 0, 0)
     const medicionesHoy = medicionesData.filter((m) => m.created_at >= inicioHoy)
@@ -182,7 +182,7 @@ export default function General() {
 
     const ultimo = medicionesData[medicionesData.length - 1]
 
-    // === Comparación hoy vs ayer ===
+    // Comparación hoy vs ayer
     const hoyKey = getLocalDateKey(new Date())
     const ayerKey = getLocalDateKey(new Date(Date.now() - 24 * 60 * 60 * 1000))
 

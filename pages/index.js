@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabaseClient'
 export default function Home() {
   return (
     <div className="text-white bg-gradient-to-b from-gray-900 via-gray-950 to-black">
-      {/* 🎇 Hero Section */}
+      {/* Hero Section */}
       <section className="min-h-screen flex flex-col justify-center items-center text-center px-6">
         <motion.h1
           initial={{ opacity: 0, y: 40 }}
@@ -46,7 +46,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* 🚀 Sobre el producto */}
+      {/* Sobre el producto */}
       <section
         id="sobre"
         className="py-24 px-6 md:px-20 text-center bg-gradient-to-r from-gray-900 via-gray-800 to-black"
@@ -73,7 +73,7 @@ export default function Home() {
         </motion.p>
       </section>
 
-      {/* 🌌 Servicios */}
+      {/* Servicios */}
       <section
         id="servicios"
         className="py-24 px-6 md:px-20 text-center bg-gradient-to-r from-blue-950 via-gray-900 to-black"
@@ -119,7 +119,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 🔭 Call to Action final */}
+      {/* Call to Action final */}
       <section className="py-24 text-center bg-gradient-to-r from-gray-900 via-blue-900 to-black">
         <motion.h2
           initial={{ opacity: 0, y: 40 }}

@@ -76,7 +76,7 @@ export default function Circuitos() {
     checkUser()
   }, [])
 
-  // === Cargar circuitos de la BD ===
+  // Cargar circuitos de la BD 
   const loadCircuitos = async () => {
     const {
       data: { user },
@@ -87,7 +87,7 @@ export default function Circuitos() {
     const { data: circuitosData, error } = await supabase
       .from('circuitos')
       .select('id, nombre')
-      .eq('id_usuario', user.id) // 🔥 filtrar por el usuario autenticado
+      .eq('id_usuario', user.id) //  filtrar por el usuario autenticado
 
     if (error) {
       console.error(error)
@@ -103,7 +103,7 @@ export default function Circuitos() {
     }
   }
 
-  // === Cargar mediciones del circuito seleccionado ===
+  //  Cargar mediciones del circuito seleccionado 
   useEffect(() => {
     if (!selectedCircuit || !user) return
 
@@ -121,7 +121,7 @@ export default function Circuitos() {
         return
       }
 
-      // === Si no hay mediciones → llenar ceros ===
+      // Si no hay mediciones → llenar ceros
       if (!medicionesDataRaw || medicionesDataRaw.length === 0) {
         const now = new Date()
         const windowMinutes = 10
@@ -152,14 +152,14 @@ export default function Circuitos() {
         return
       }
 
-      // === Convertir y ordenar fechas ===
+      // Convertir y ordenar fechas
       const medicionesData = medicionesDataRaw.map((m) => ({
         ...m,
         created_at: new Date(m.created_at),
       }))
       medicionesData.sort((a, b) => a.created_at - b.created_at)
 
-      // === Potencia: últimos 10 minutos hasta ahora ===
+      // Potencia: últimos 10 minutos hasta ahora
       const now = new Date()
       const windowMinutes = 10
       const startTime = new Date(now.getTime() - (windowMinutes - 1) * 60_000)
@@ -186,11 +186,11 @@ export default function Circuitos() {
             minute: '2-digit',
             hour12: false,
           }),
-          potencia: medicion ? medicion.potencia : 0, // ⚡️ ahora siempre 0 si no hubo dato
+          potencia: medicion ? medicion.potencia : 0, //  ahora siempre 0 si no hubo dato
         })
       }
 
-      // === Energía: últimos 7 días ===
+      //  Energía: últimos 7 días
       const energiaPorDiaMap = {}
       medicionesData.forEach((m) => {
         const key = getLocalDateKey(m.created_at)
@@ -206,7 +206,7 @@ export default function Circuitos() {
         energiaArr.push({ name: label, energia: energiaPorDiaMap[key] || 0 })
       }
 
-      // === Resumen Energía: últimos 7 días ===
+      // Resumen Energía: últimos 7 días
       const energiaUltimos7 = energiaArr.map((d) => d.energia)
 
       const resumenDiarioMax = energiaUltimos7.length ? Math.max(...energiaUltimos7) : 0
@@ -215,7 +215,7 @@ export default function Circuitos() {
         ? energiaUltimos7.reduce((a, b) => a + b, 0) / energiaUltimos7.length
         : 0
 
-      // === Costos por hora desde consumos_horarios ===
+      // Costos por hora desde consumos_horarios
       const today = getLocalDateKey(new Date())
 
       const { data: consumosHoy, error: errorConsumos } = await supabase
@@ -241,7 +241,7 @@ export default function Circuitos() {
         })
       }
 
-      // === Resumen Costo: hasta la hora actual ===
+      // Resumen Costo: hasta la hora actual 
       const horaActual = new Date().getHours()
       const costosHastaAhora = costosPorHora.filter((c) => c.hora <= horaActual)
 
@@ -253,7 +253,7 @@ export default function Circuitos() {
         ? costosHastaAhora.reduce((a, b) => a + b.costo, 0) / costosHastaAhora.length
         : 0
 
-      // === Resumen Potencia: solo HOY ===
+      // Resumen Potencia: solo HOY 
       const inicioHoy = new Date()
       inicioHoy.setHours(0, 0, 0, 0)
 
@@ -269,7 +269,7 @@ export default function Circuitos() {
 
       const ultimo = medicionesData[medicionesData.length - 1]
 
-      // === Comparación Hoy vs Ayer ===
+      // Comparación Hoy vs Ayer
       const hoyKey = getLocalDateKey(new Date())
       const ayerKey = getLocalDateKey(new Date(Date.now() - 24 * 60 * 60 * 1000))
 
@@ -304,7 +304,7 @@ export default function Circuitos() {
           promedio: resumenCostoAvg,
           estado: costosHastaAhora.some((c) => c.costo > 0) ? 'Estable' : 'Sin datos',
         },
-        // 👇 añadimos los indicadores básicos desde el último registro
+        // añadimos los indicadores básicos desde el último registro
         voltaje: ultimo?.voltaje ?? 0,
         corriente: ultimo?.corriente ?? 0,
         frecuencia: ultimo?.frecuencia ?? 0,
@@ -322,7 +322,7 @@ export default function Circuitos() {
     return () => clearInterval(interval)
   }, [selectedCircuit, user])
 
-  // === UI (visual, lo que ya tienes) ===
+  // UI (visual, lo que ya tienes) 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white px-4 sm:px-8 md:px-16 lg:px-24 pt-24 pb-20 space-y-10">
       {/* Título */}
@@ -435,7 +435,6 @@ export default function Circuitos() {
       </motion.div>
 
       {/* === Fila 3: Resumen Diario + Energía === */}
-      {/* === Fila Energía === */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
