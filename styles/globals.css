@@ -21,6 +21,10 @@
   }
 }
 
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1); /* invierte colores, se adapta al fondo oscuro */
+  cursor: pointer;
+}
 
 
 @layer base {

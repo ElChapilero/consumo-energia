@@ -17,7 +17,6 @@ import {
 
 export default function Historial() {
   const [tab, setTab] = useState('general')
-  const [filtro, setFiltro] = useState('dia')
   const [metrica, setMetrica] = useState('potencia')
   const [fechaInicio, setFechaInicio] = useState('2025-09-01')
   const [fechaFin, setFechaFin] = useState('2025-09-02')
@@ -48,38 +47,23 @@ export default function Historial() {
     fetchCircuitos()
   }, [])
 
-  // Cargar consumos según el tab (general o circuito) 
+  // Cargar consumos
   useEffect(() => {
     const fetchData = async () => {
       let query
 
       if (tab === 'general') {
         query = supabase
-          .from('consumos_horarios_general')
+          .from('consumos_horarios_general') // ya correcta
           .select('*')
           .gte('fecha', fechaInicio)
           .lte('fecha', fechaFin)
           .order('fecha', { ascending: true })
           .order('hora', { ascending: true })
       } else {
-        //  Datos de un solo circuito
         query = supabase
-          .from('consumos_horarios')
-          .select(
-            `
-            circuito_id,
-            fecha,
-            hora,
-            energia,
-            costo,
-            potencia,
-            voltaje,
-            corriente,
-            frecuencia,
-            factor_potencia,
-            num_alertas
-          `
-          )
+          .from('consumos_horarios_circuito') // <- actualizar aquí
+          .select('*')
           .gte('fecha', fechaInicio)
           .lte('fecha', fechaFin)
           .eq('circuito_id', tab)
@@ -96,9 +80,10 @@ export default function Historial() {
           fecha: `${d.fecha} ${String(d.hora).padStart(2, '0')}:00`,
           gasto: d.costo || 0,
           potenciaPromedio: d.potencia || 0,
-          numAlertas: d.num_alertas || 0,
-          alerta: (d.num_alertas || 0) > 0 ? 'Sobrecarga' : 'Normal',
+          // unificamos la alerta
+          alerta: d.num_alertas > 0 ? `${d.num_alertas} alerta(s)` : 'Normal',
         }))
+
         setData(transformados)
       }
     }
@@ -106,7 +91,7 @@ export default function Historial() {
     fetchData()
   }, [tab, fechaInicio, fechaFin])
 
-  // Exportar CSV 
+  // Exportar CSV
   const exportToCSV = () => {
     if (!data.length) return
 
@@ -132,7 +117,7 @@ export default function Historial() {
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white px-4 sm:px-8 md:px-16 lg:px-24 pt-24 pb-20 space-y-10">
       <h1 className="text-4xl font-bold text-center text-blue-400">Historial Energético</h1>
 
-      {/* === Tabs dinámicos === */}
+      {/* === Tabs === */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 max-w-4xl mx-auto">
         <button
           onClick={() => setTab('general')}
@@ -215,7 +200,7 @@ export default function Historial() {
         </ResponsiveContainer>
       </div>
 
-      {/* === Filtros === */}
+      {/* === Botón CSV === */}
       <div className="flex justify-between items-center mb-4">
         <button
           onClick={exportToCSV}
@@ -225,7 +210,7 @@ export default function Historial() {
         </button>
       </div>
 
-      {/* === Tabla dinámica === */}
+      {/* === Tabla === */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -243,8 +228,7 @@ export default function Historial() {
                 <th className="p-3 border border-gray-700">Frecuencia (Hz)</th>
                 <th className="p-3 border border-gray-700">Factor de Potencia</th>
                 <th className="p-3 border border-gray-700">Gasto ($COP)</th>
-                <th className="p-3 border border-gray-700">Tipo de alerta</th>
-                <th className="p-3 border border-gray-700"># Alertas</th>
+                <th className="p-3 border border-gray-700">Alertas</th>
               </tr>
             </thead>
             <tbody>
@@ -259,7 +243,6 @@ export default function Historial() {
                   <td className="p-2 border border-gray-700">{d.factor_potencia}</td>
                   <td className="p-2 border border-gray-700">${d.gasto}</td>
                   <td className="p-2 border border-gray-700">{d.alerta}</td>
-                  <td className="p-2 border border-gray-700">{d.numAlertas}</td>
                 </tr>
               ))}
             </tbody>
