@@ -245,14 +245,14 @@ export default function General() {
         Dashboard General - Todos los Circuitos
       </motion.h1>
 
-      {/* === Fila 1: Indicadores simples === */}
+      {/* Fila 1: Indicadores simples */}
       <IndicadoresBasicos
         voltaje={data.voltaje}
         corriente={data.corriente}
         frecuencia={data.frecuencia}
       />
 
-      {/* === Fila 2: Resumen + Gráfica === */}
+      {/* Fila 2: Resumen + Gráfica */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -293,7 +293,7 @@ export default function General() {
         </Card>
       </motion.div>
 
-      {/* === Fila 3: Resumen Diario + Energía === */}
+      {/* Fila 3: Resumen Diario + Energía */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -313,7 +313,7 @@ export default function General() {
         </div>
       </motion.div>
 
-      {/* === Fila 4: Comparación día actual vs anterior === */}
+      {/* Fila 4: Comparación día actual vs anterior */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -333,7 +333,7 @@ export default function General() {
         </div>
       </motion.div>
 
-      {/* === Fila 5: Costo por hora === */}
+      {/* Fila 5: Costo por hora */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}

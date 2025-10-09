@@ -117,7 +117,7 @@ export default function Historial() {
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white px-4 sm:px-8 md:px-16 lg:px-24 pt-24 pb-20 space-y-10">
       <h1 className="text-4xl font-bold text-center text-blue-400">Historial Energético</h1>
 
-      {/* === Tabs === */}
+      {/* Tabs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 max-w-4xl mx-auto">
         <button
           onClick={() => setTab('general')}
@@ -147,7 +147,7 @@ export default function Historial() {
         ))}
       </div>
 
-      {/* === Gráfica === */}
+      {/* Gráfica */}
       <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-lg shadow-xl">
         <div className="flex justify-between items-center mb-4 flex-col md:flex-row">
           <select
@@ -200,7 +200,7 @@ export default function Historial() {
         </ResponsiveContainer>
       </div>
 
-      {/* === Botón CSV === */}
+      {/* Botón CSV */}
       <div className="flex justify-between items-center mb-4">
         <button
           onClick={exportToCSV}
@@ -210,7 +210,7 @@ export default function Historial() {
         </button>
       </div>
 
-      {/* === Tabla === */}
+      {/* Tabla */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}

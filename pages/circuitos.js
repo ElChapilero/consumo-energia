@@ -44,7 +44,7 @@ export default function Circuitos() {
   })
   const [consumoHoraConCosto, setConsumoHoraConCosto] = useState([])
 
-  // === Verifica sesión y carga datos ===
+  // Verifica sesión y carga datos
   useEffect(() => {
     const checkUser = async () => {
       const {
@@ -76,7 +76,7 @@ export default function Circuitos() {
     checkUser()
   }, [])
 
-  // Cargar circuitos de la BD 
+  // Cargar circuitos de la BD
   const loadCircuitos = async () => {
     const {
       data: { user },
@@ -86,7 +86,7 @@ export default function Circuitos() {
 
     const { data: circuitosData, error } = await supabase
       .from('circuitos')
-      .select('id, nombre')
+      .select('id, nombre, estado')
       .eq('id_usuario', user.id) //  filtrar por el usuario autenticado
 
     if (error) {
@@ -98,12 +98,12 @@ export default function Circuitos() {
     if (circuitosData.length > 0) {
       setSelectedCircuit(circuitosData[0].id)
       const initState = {}
-      circuitosData.forEach((c) => (initState[c.id] = true))
+      circuitosData.forEach((c) => (initState[c.id] = c.estado ?? false))
       setCircuitState(initState)
     }
   }
 
-  //  Cargar mediciones del circuito seleccionado 
+  //  Cargar mediciones del circuito seleccionado
   useEffect(() => {
     if (!selectedCircuit || !user) return
 
@@ -241,7 +241,7 @@ export default function Circuitos() {
         })
       }
 
-      // Resumen Costo: hasta la hora actual 
+      // Resumen Costo: hasta la hora actual
       const horaActual = new Date().getHours()
       const costosHastaAhora = costosPorHora.filter((c) => c.hora <= horaActual)
 
@@ -253,7 +253,7 @@ export default function Circuitos() {
         ? costosHastaAhora.reduce((a, b) => a + b.costo, 0) / costosHastaAhora.length
         : 0
 
-      // Resumen Potencia: solo HOY 
+      // Resumen Potencia: solo HOY
       const inicioHoy = new Date()
       inicioHoy.setHours(0, 0, 0, 0)
 
@@ -322,7 +322,7 @@ export default function Circuitos() {
     return () => clearInterval(interval)
   }, [selectedCircuit, user])
 
-  // UI (visual, lo que ya tienes) 
+  // UI (visual, lo que ya tienes)
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white px-4 sm:px-8 md:px-16 lg:px-24 pt-24 pb-20 space-y-10">
       {/* Título */}
@@ -367,9 +367,28 @@ export default function Circuitos() {
 
             {/* Botón de cambio de estado */}
             <button
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.stopPropagation()
-                setCircuitState((prev) => ({ ...prev, [c.id]: !prev[c.id] }))
+
+                const nuevoEstado = !circuitState[c.id]
+                setCircuitState((prev) => ({ ...prev, [c.id]: nuevoEstado }))
+
+                try {
+                  const { error } = await supabase
+                    .from('circuitos')
+                    .update({ estado: nuevoEstado }) // o { activo: nuevoEstado } si tu campo se llama así
+                    .eq('id', c.id)
+
+                  if (error) {
+                    console.error('Error al actualizar estado del circuito:', error)
+                    alert(' No se pudo actualizar el estado del circuito')
+                    // revertir si falla
+                    setCircuitState((prev) => ({ ...prev, [c.id]: !nuevoEstado }))
+                  }
+                } catch (err) {
+                  console.error(err)
+                  setCircuitState((prev) => ({ ...prev, [c.id]: !nuevoEstado }))
+                }
               }}
               className={`mt-4 px-4 py-2 rounded-lg font-semibold w-full transition ${
                 circuitState[c.id]
@@ -383,14 +402,14 @@ export default function Circuitos() {
         ))}
       </motion.div>
 
-      {/* === Fila 1: Indicadores simples === */}
+      {/* Fila 1: Indicadores simples */}
       <IndicadoresBasicos
         voltaje={data.voltaje}
         corriente={data.corriente}
         frecuencia={data.frecuencia}
       />
 
-      {/* === Fila 2: Resumen + Gráfica === */}
+      {/* Fila 2: Resumen + Gráfica */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -434,7 +453,7 @@ export default function Circuitos() {
         </Card>
       </motion.div>
 
-      {/* === Fila 3: Resumen Diario + Energía === */}
+      {/* Fila 3: Resumen Diario + Energía */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -454,7 +473,7 @@ export default function Circuitos() {
         </div>
       </motion.div>
 
-      {/* === Fila 4: Comparación día actual vs anterior === */}
+      {/* Fila 4: Comparación día actual vs anterior */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -474,7 +493,7 @@ export default function Circuitos() {
         </div>
       </motion.div>
 
-      {/* === Fila 5: Costo por hora === */}
+      {/* Fila 5: Costo por hora */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
