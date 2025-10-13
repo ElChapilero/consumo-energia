@@ -18,12 +18,41 @@ export default function Navbar() {
       const {
         data: { session },
       } = await supabase.auth.getSession()
-      setUser(session?.user || null)
+
+      let currentUser = session?.user || null
+
+      if (currentUser) {
+        // Buscar nombre real en tabla usuarios
+        const { data: perfil, error } = await supabase
+          .from('usuarios')
+          .select('nombre')
+          .eq('id', currentUser.id)
+          .single()
+
+        if (!error && perfil) {
+          currentUser = { ...currentUser, nombre: perfil.nombre }
+        }
+      }
+
+      setUser(currentUser)
     }
+
     getSession()
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null)
+    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      let currentUser = session?.user || null
+      if (currentUser) {
+        const { data: perfil, error } = await supabase
+          .from('usuarios')
+          .select('nombre')
+          .eq('id', currentUser.id)
+          .single()
+
+        if (!error && perfil) {
+          currentUser = { ...currentUser, nombre: perfil.nombre }
+        }
+      }
+      setUser(currentUser)
     })
 
     return () => {
@@ -97,7 +126,7 @@ export default function Navbar() {
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-semibold text-gray-200">
-                      {user.user_metadata?.nombre || 'Usuario'}
+                      {user?.nombre || 'Usuario'}
                     </p>
                     <p className="text-xs text-gray-400">Perfil de usuario</p>
                   </div>
@@ -186,7 +215,7 @@ export default function Navbar() {
               </div>
               <div className="text-left">
                 <p className="text-sm font-semibold text-gray-200">
-                  {user.user_metadata?.nombre || 'Usuario'}
+                  {user?.nombre || 'Usuario'}
                 </p>
                 <p className="text-xs text-gray-400">Ver perfil</p>
               </div>

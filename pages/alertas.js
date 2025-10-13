@@ -31,16 +31,28 @@ export default function Alertas() {
         data: { user },
       } = await supabase.auth.getUser()
       if (!user) return
+
+      // Obtener los dispositivos del usuario
+      const { data: dispositivos } = await supabase
+        .from('dispositivos')
+        .select('id')
+        .eq('id_usuario', user.id)
+
+      if (!dispositivos?.length) return
+
+      // Obtener los circuitos asociados a esos dispositivos
+      const dispositivoIds = dispositivos.map((d) => d.id)
       const { data: c } = await supabase
         .from('circuitos')
         .select('id, nombre')
-        .eq('id_usuario', user.id)
+        .in('id_dispositivo', dispositivoIds)
 
       if (c?.length) {
         setCircuitos(c)
         setTab(c[0].id)
       }
     }
+
     fetchCircuitos()
   }, [])
 

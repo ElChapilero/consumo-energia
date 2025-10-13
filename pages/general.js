@@ -67,14 +67,25 @@ export default function General() {
   }
 
   const loadDatos = async (user) => {
+    // 1️⃣ Buscar dispositivos del usuario
+    const { data: dispositivos } = await supabase
+      .from('dispositivos')
+      .select('id')
+      .eq('id_usuario', user.id)
+
+    if (!dispositivos || dispositivos.length === 0) return
+    const dispositivosIds = dispositivos.map((d) => d.id)
+
+    // 2️⃣ Buscar circuitos de esos dispositivos
     const { data: circuitos } = await supabase
       .from('circuitos')
       .select('id')
-      .eq('id_usuario', user.id)
+      .in('id_dispositivo', dispositivosIds)
 
     if (!circuitos || circuitos.length === 0) return
     const circuitosIds = circuitos.map((c) => c.id)
 
+    // 3️⃣ Obtener mediciones de esos circuitos
     const { data: medicionesDataRaw } = await supabase
       .from('mediciones')
       .select(
@@ -85,17 +96,17 @@ export default function General() {
 
     if (!medicionesDataRaw || medicionesDataRaw.length === 0) return
 
+    // 4️⃣ Procesar datos (igual que antes)
     const medicionesData = medicionesDataRaw.map((m) => ({
       ...m,
       created_at: new Date(m.created_at),
     }))
     medicionesData.sort((a, b) => a.created_at - b.created_at)
 
-    // Potencia últimos 10 minutos
+    // Potencia últimos 10 min
     const now = new Date()
     const windowMinutes = 10
     const startTime = new Date(now.getTime() - (windowMinutes - 1) * 60_000)
-
     const potenciaData = []
     for (let i = 0; i < windowMinutes; i++) {
       const t = new Date(startTime.getTime() + i * 60_000)
@@ -117,7 +128,20 @@ export default function General() {
       })
     }
 
-    // Energía últimos 7 días
+    // Energía por día (últimos 7)
+    const getLocalDateKey = (date) => {
+      return date
+        .toLocaleDateString('es-CO', {
+          timeZone: 'America/Bogota',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        })
+        .split('/')
+        .reverse()
+        .join('-')
+    }
+
     const energiaPorDiaMap = {}
     medicionesData.forEach((m) => {
       const key = getLocalDateKey(m.created_at)
@@ -143,7 +167,7 @@ export default function General() {
     const today = getLocalDateKey(new Date())
     const { data: consumosHoy } = await supabase
       .from('consumos_horarios')
-      .select('hora, costo')
+      .select('hora, costo, circuito_id')
       .in('circuito_id', circuitosIds)
       .eq('fecha', today)
       .order('hora', { ascending: true })
@@ -168,7 +192,7 @@ export default function General() {
       ? costosHastaAhora.reduce((a, b) => a + b.costo, 0) / costosHastaAhora.length
       : 0
 
-    // Resumen potencia (solo hoy)
+    // Resumen potencia de hoy
     const inicioHoy = new Date()
     inicioHoy.setHours(0, 0, 0, 0)
     const medicionesHoy = medicionesData.filter((m) => m.created_at >= inicioHoy)
@@ -185,7 +209,6 @@ export default function General() {
     // Comparación hoy vs ayer
     const hoyKey = getLocalDateKey(new Date())
     const ayerKey = getLocalDateKey(new Date(Date.now() - 24 * 60 * 60 * 1000))
-
     const energiaHoy = energiaPorDiaMap[hoyKey] || 0
     const energiaAyer = energiaPorDiaMap[ayerKey] || 0
     const diferencia =

@@ -29,18 +29,36 @@ export default function Historial() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-
       if (!user) return
 
-      const { data, error } = await supabase
-        .from('circuitos')
-        .select('id, nombre')
+      // 1️⃣ Obtener dispositivos del usuario
+      const { data: dispositivos, error: errorDisp } = await supabase
+        .from('dispositivos')
+        .select('id')
         .eq('id_usuario', user.id)
 
-      if (error) {
-        console.error('Error cargando circuitos:', error)
+      if (errorDisp) {
+        console.error('Error obteniendo dispositivos:', errorDisp)
+        return
+      }
+
+      if (!dispositivos?.length) {
+        console.warn('No se encontraron dispositivos para este usuario.')
+        return
+      }
+
+      // 2️⃣ Obtener circuitos vinculados a esos dispositivos
+      const dispositivoIds = dispositivos.map((d) => d.id)
+
+      const { data: circuitosData, error: errorCirc } = await supabase
+        .from('circuitos')
+        .select('id, nombre')
+        .in('id_dispositivo', dispositivoIds)
+
+      if (errorCirc) {
+        console.error('Error cargando circuitos:', errorCirc)
       } else {
-        setCircuitos(data || [])
+        setCircuitos(circuitosData || [])
       }
     }
 

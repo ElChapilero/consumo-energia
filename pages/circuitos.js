@@ -81,16 +81,35 @@ export default function Circuitos() {
     const {
       data: { user },
     } = await supabase.auth.getUser()
-
     if (!user) return
 
+    // Buscar los dispositivos del usuario autenticado
+    const { data: dispositivosData, error: errorDispositivos } = await supabase
+      .from('dispositivos')
+      .select('id')
+      .eq('id_usuario', user.id)
+
+    if (errorDispositivos) {
+      console.error('Error cargando dispositivos:', errorDispositivos)
+      return
+    }
+
+    if (!dispositivosData || dispositivosData.length === 0) {
+      console.warn('⚠️ El usuario no tiene dispositivos registrados.')
+      return
+    }
+
+    const dispositivoIds = dispositivosData.map((d) => d.id)
+
+    // Cargar los circuitos asociados a los dispositivos del usuario
     const { data: circuitosData, error } = await supabase
       .from('circuitos')
-      .select('id, nombre, estado')
-      .eq('id_usuario', user.id) //  filtrar por el usuario autenticado
+      .select('id, nombre, estado, id_dispositivo, indice')
+      .in('id_dispositivo', dispositivoIds)
+      .order('indice', { ascending: true })
 
     if (error) {
-      console.error(error)
+      console.error('Error cargando circuitos:', error)
       return
     }
 
