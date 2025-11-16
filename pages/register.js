@@ -1,39 +1,80 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
+import { useToast } from '@/components/ToastContext'
+
+const friendlyErrors = {
+  'User already registered': 'Este correo ya está registrado',
+  'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres',
+  'Email not found': 'El correo no es válido',
+}
 
 export default function Register() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const router = useRouter()
+  const { addToast } = useToast()
+
+  // Redirige si ya hay sesión activa
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession()
+      if (data?.session) router.push('/')
+    }
+    checkSession()
+  }, [router])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
-    setSuccess('')
     setLoading(true)
+
+    // Validación manual
+    if (!name.trim()) {
+      addToast('error', 'El nombre es obligatorio')
+      setLoading(false)
+      return
+    }
+
+    if (!email.includes('@')) {
+      addToast('error', 'El correo debe ser válido')
+      setLoading(false)
+      return
+    }
+
+    if (password.length < 6) {
+      addToast('error', 'La contraseña debe tener al menos 6 caracteres')
+      setLoading(false)
+      return
+    }
 
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name },
+        data: { nombre: name },
       },
     })
 
     if (signUpError) {
-      setError(signUpError.message)
+      addToast('error', friendlyErrors[signUpError.message] || 'Ha ocurrido un error')
     } else {
-      setSuccess('Registro exitoso. Revisa tu correo para confirmar la cuenta.')
+      const userId = data.user?.id
+      if (userId) {
+        await supabase.from('usuarios').insert([{ id: userId, nombre: name, email }])
+      }
+
+      addToast('success', 'Registro exitoso. Redirigiendo a login...')
       setName('')
       setEmail('')
       setPassword('')
+      // 🔹 Redirigir a login en lugar de inicio
+      setTimeout(() => router.push('/login'), 1200)
     }
 
     setLoading(false)
@@ -56,20 +97,18 @@ export default function Register() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Tu nombre"
+              className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
             <label className="block text-gray-300 mb-1">Correo</label>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="ejemplo@email.com"
+              className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
@@ -78,9 +117,8 @@ export default function Register() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="••••••••"
+              className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -92,9 +130,6 @@ export default function Register() {
             {loading ? 'Registrando...' : 'Registrarme'}
           </button>
         </form>
-
-        {error && <p className="text-red-400 text-center mt-4">{error}</p>}
-        {success && <p className="text-green-400 text-center mt-4">{success}</p>}
 
         <p className="text-gray-400 text-center mt-4">
           ¿Ya tienes cuenta?{' '}
