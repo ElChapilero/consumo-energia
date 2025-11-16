@@ -179,7 +179,7 @@ export default function Alertas() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="text-4xl font-bold text-center bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent drop-shadow-lg"
+        className="text-4xl font-bold text-center text-blue-400"
       >
         Alertas Energéticas
       </motion.h1>
