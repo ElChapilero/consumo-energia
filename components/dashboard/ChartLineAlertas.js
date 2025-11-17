@@ -1,5 +1,5 @@
 'use client'
-
+import { useState } from 'react'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -34,9 +34,15 @@ export default function ChartLineAlertas({ data = [], title = 'Tendencia', metri
 
   const tooltipId = tooltipMap[metrica] || 11
   const tooltipInfo = tooltipData[tooltipId]
+  const [tooltipActive, setTooltipActive] = useState(false)
 
   return (
-    <div className="chart-touch-lock flex-1">
+    <div
+      className="chart-touch-lock flex-1"
+      onTouchStart={() => setTooltipActive(true)} // activa tooltip al tocar
+      onTouchEnd={() => setTooltipActive(false)} // desactiva al soltar
+      onTouchCancel={() => setTooltipActive(false)} // desactiva si el touch se cancela
+    >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -77,6 +83,7 @@ export default function ChartLineAlertas({ data = [], title = 'Tendencia', metri
               />
 
               <Tooltip
+                active={tooltipActive}
                 contentStyle={{
                   backgroundColor: '#0f172a',
                   borderRadius: '10px',

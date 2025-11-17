@@ -10,14 +10,21 @@ import {
   Tooltip,
 } from 'recharts'
 import { motion } from 'framer-motion'
-import { metricColors } from '@/constants/colors' // 👈 importamos la paleta
+import { metricColors } from '@/constants/colors'
+import { useState } from 'react'
 
 export default function ChartLinePotencia({ data, dataKey = 'potencia', title }) {
   const { primary } = metricColors[dataKey] || metricColors.potencia
   const gradientId = `gradient-${dataKey}`
+  const [tooltipActive, setTooltipActive] = useState(false)
 
   return (
-    <div className="chart-touch-lock flex-1">
+    <div
+      className="chart-touch-lock flex-1"
+      onTouchStart={() => setTooltipActive(true)}   // activa tooltip al tocar
+      onTouchEnd={() => setTooltipActive(false)}   // desactiva al soltar
+      onTouchCancel={() => setTooltipActive(false)} // desactiva si el touch se cancela
+    >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -27,7 +34,7 @@ export default function ChartLinePotencia({ data, dataKey = 'potencia', title })
       >
         <h3 className="text-xl font-semibold text-blue-300 mb-4 tracking-wide flex items-center justify-center gap-2">
           {title}
-          <TooltipInfo numero={1} /> {/* ← puedes cambiar el número según el tema */}
+          <TooltipInfo numero={1} />
         </h3>
 
         <div className="flex-1 w-full">
@@ -50,6 +57,7 @@ export default function ChartLinePotencia({ data, dataKey = 'potencia', title })
               />
 
               <Tooltip
+                active={tooltipActive} // ⬅️ controla la visibilidad del tooltip
                 contentStyle={{
                   backgroundColor: '#0f172a',
                   borderRadius: '10px',

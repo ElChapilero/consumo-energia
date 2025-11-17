@@ -1,5 +1,5 @@
 'use client'
-
+import { useState } from 'react'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -20,6 +20,7 @@ export default function ChartLineHistorial({ data = [], metrica = 'potencia' }) 
 
   const gradientIdPromedio = `gradient-historial-promedio`
   const gradientIdActual = `gradient-historial-${metrica}`
+  const [tooltipActive, setTooltipActive] = useState(false)
 
   // 🔢 Mapa para asociar la métrica con su ID de tooltip
   const tooltipMap = {
@@ -35,7 +36,12 @@ export default function ChartLineHistorial({ data = [], metrica = 'potencia' }) 
   const tooltipId = tooltipMap[metrica] || 11
 
   return (
-    <div className="chart-touch-lock flex-1">
+    <div
+      className="chart-touch-lock flex-1"
+      onTouchStart={() => setTooltipActive(true)} // activa tooltip al tocar
+      onTouchEnd={() => setTooltipActive(false)} // desactiva al soltar
+      onTouchCancel={() => setTooltipActive(false)} // desactiva si el touch se cancela
+    >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -83,6 +89,7 @@ export default function ChartLineHistorial({ data = [], metrica = 'potencia' }) 
               <YAxis stroke="#d1d5db" fontSize={14} tickFormatter={(v) => v.toFixed(2)} />
 
               <Tooltip
+                active={tooltipActive}
                 contentStyle={{
                   backgroundColor: '#0f172a',
                   borderRadius: '10px',

@@ -98,7 +98,7 @@ svg:focus {
 }
 
 .chart-touch-lock {
-  touch-action: none;
+  touch-action: pan-y;
   -webkit-touch-callout: none;
   user-select: none;
 }
