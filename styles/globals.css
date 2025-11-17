@@ -87,9 +87,18 @@ body {
   }
 }
 
+
+/* cambios globales para arreglar las graficas */
 .recharts-wrapper:focus {
   outline: none !important;
 }
+
 svg:focus {
   outline: none !important;
+}
+
+.chart-touch-lock {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  user-select: none;
 }

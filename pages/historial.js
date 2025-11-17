@@ -303,15 +303,17 @@ export default function Historial() {
                     } hover:bg-gray-800/60 transition`}
                   >
                     <td className="px-4 py-2">{d.fecha}</td>
-                    <td className="px-4 py-2">{d.potencia}</td>
-                    <td className="px-4 py-2">{d.energia}</td>
-                    <td className="px-4 py-2">{d.voltaje}</td>
-                    <td className="px-4 py-2">{d.corriente}</td>
-                    <td className="px-4 py-2">{d.frecuencia}</td>
-                    <td className="px-4 py-2">{d.factor_potencia}</td>
+                    <td className="px-4 py-2">{Number(d.potencia).toFixed(2)}</td>
+                    <td className="px-4 py-2">{Number(d.energia).toFixed(2)}</td>
+                    <td className="px-4 py-2">{Number(d.voltaje).toFixed(2)}</td>
+                    <td className="px-4 py-2">{Number(d.corriente).toFixed(2)}</td>
+                    <td className="px-4 py-2">{Number(d.frecuencia).toFixed(2)}</td>
+                    <td className="px-4 py-2">{Number(d.factor_potencia).toFixed(2)}</td>
 
                     {/* 💰 Gasto con color verde */}
-                    <td className="px-4 py-2 text-green-400 font-semibold">${d.gasto}</td>
+                    <td className="px-4 py-2 text-green-400 font-semibold">
+                      ${Number(d.gasto).toFixed(2)}
+                    </td>
 
                     {/* 🚨 Alertas con color condicional */}
                     <td

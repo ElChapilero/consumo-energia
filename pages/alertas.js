@@ -305,8 +305,8 @@ export default function Alertas() {
                     <td className="px-4 py-2">{a.fecha}</td>
                     <td className="px-4 py-2">{a.hora}</td>
                     <td className="px-4 py-2">{a.metrica}</td>
-                    <td className="px-4 py-2">{a.valor_actual}</td>
-                    <td className="px-4 py-2">{a.valor_referencia}</td>
+                    <td className="px-4 py-2">{Number(a.valor_actual).toFixed(2)}</td>
+                    <td className="px-4 py-2">{Number(a.valor_referencia).toFixed(2)}</td>
                     <td className="px-4 py-2 font-semibold">{a.tipo}</td>
                     <td className="px-4 py-2">{a.mensaje}</td>
                   </tr>
