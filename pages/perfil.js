@@ -5,101 +5,121 @@ import { supabase } from '@/lib/supabaseClient'
 import { Card, CardContent } from '@/components/ui/card'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Pencil, Save, X, Cpu } from 'lucide-react'
+import { Pencil, Save, X, Trash2, Lock } from 'lucide-react'
 
 export default function Perfil() {
   const [user, setUser] = useState(null)
   const [nombre, setNombre] = useState('')
   const [email, setEmail] = useState('')
   const [fecha, setFecha] = useState('')
-  const [uuidEsp32, setUuidEsp32] = useState('')
-  const [circuitos, setCircuitos] = useState([])
-
   const [editandoNombre, setEditandoNombre] = useState(false)
-  const [editandoUUID, setEditandoUUID] = useState(false)
-  const [editandoCircuito, setEditandoCircuito] = useState(null)
+  const [editandoEmail, setEditandoEmail] = useState(false)
+  const [nuevoEmail, setNuevoEmail] = useState('')
   const [loading, setLoading] = useState(true)
   const [guardando, setGuardando] = useState(false)
 
   useEffect(() => {
-    const obtenerDatos = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+    const cargarUsuario = async () => {
+      const { data, error } = await supabase.auth.getUser()
+      if (error || !data.user) {
+        setLoading(false)
+        return
+      }
 
+      const user = data.user
       setUser(user)
       setEmail(user.email)
       setFecha(new Date(user.created_at).toLocaleDateString('es-CO'))
-      setNombre(user.user_metadata?.nombre || '')
 
-      const { data: dispositivo } = await supabase
-        .from('dispositivos')
-        .select('uuid_esp32')
-        .eq('id_usuario', user.id)
-        .single()
-      if (dispositivo) setUuidEsp32(dispositivo.uuid_esp32)
+      let nombreFinal = user.user_metadata?.nombre ?? user.email?.split('@')[0] ?? ''
+      const { data: perfil } = await supabase
+        .from('usuarios')
+        .select('nombre')
+        .eq('id', user.id)
+        .maybeSingle()
 
-      const { data: circuitosData } = await supabase
-        .from('circuitos')
-        .select('id, nombre, estado, creado_en')
-        .eq('id_usuario', user.id)
-        .order('creado_en', { ascending: true })
-
-      if (circuitosData) setCircuitos(circuitosData)
+      if (perfil?.nombre) nombreFinal = perfil.nombre
+      setNombre(nombreFinal)
       setLoading(false)
     }
 
-    obtenerDatos()
+    cargarUsuario()
   }, [])
 
+  // === Cambiar nombre ===
   const handleGuardarNombre = async () => {
     setGuardando(true)
-    const { error } = await supabase.auth.updateUser({
-      data: { nombre },
-    })
-    setGuardando(false)
-    setEditandoNombre(false)
-    if (!error) alert('✅ Nombre actualizado correctamente')
-    else alert('❌ Error al actualizar el nombre')
-  }
+    try {
+      const { data: existente } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle()
 
-  const handleGuardarUUID = async () => {
-    setGuardando(true)
-    const { data: existe } = await supabase
-      .from('dispositivos')
-      .select('id')
-      .eq('id_usuario', user.id)
-      .single()
+      if (existente)
+        await supabase.from('usuarios').update({ nombre }).eq('id', user.id)
+      else
+        await supabase.from('usuarios').insert([{ id: user.id, nombre }])
 
-    if (existe) {
-      await supabase
-        .from('dispositivos')
-        .update({ uuid_esp32: uuidEsp32 })
-        .eq('id_usuario', user.id)
-    } else {
-      await supabase
-        .from('dispositivos')
-        .insert([{ id_usuario: user.id, uuid_esp32: uuidEsp32 }])
+      alert('✅ Nombre actualizado correctamente.')
+      setEditandoNombre(false)
+    } catch (error) {
+      console.error(error)
+      alert('❌ Error al guardar el nombre.')
+    } finally {
+      setGuardando(false)
     }
-
-    setGuardando(false)
-    setEditandoUUID(false)
-    alert('✅ UUID del ESP32 actualizado correctamente')
   }
 
-  const handleGuardarCircuito = async (id, nuevoNombre) => {
-    await supabase.from('circuitos').update({ nombre: nuevoNombre }).eq('id', id)
-    setCircuitos((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, nombre: nuevoNombre } : c))
-    )
-    setEditandoCircuito(null)
+  // === Cambiar correo ===
+  const handleGuardarEmail = async () => {
+    if (!nuevoEmail || nuevoEmail === email) return
+    setGuardando(true)
+    try {
+      const { error } = await supabase.auth.updateUser({ email: nuevoEmail })
+      if (error) throw error
+      alert('📧 Se envió un correo de verificación al nuevo email.')
+      setEditandoEmail(false)
+    } catch (error) {
+      console.error(error)
+      alert('❌ Error al actualizar el correo.')
+    } finally {
+      setGuardando(false)
+    }
+  }
+
+  // === Cambiar contraseña ===
+  const handleCambiarContrasena = async () => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/auth/reset',
+      })
+      if (error) throw error
+      alert('🔒 Se envió un enlace de recuperación de contraseña a tu correo.')
+    } catch (error) {
+      console.error(error)
+      alert('❌ Error al enviar enlace de recuperación.')
+    }
+  }
+
+  // === Eliminar cuenta ===
+  const handleEliminarCuenta = async () => {
+    const confirmar = confirm('⚠️ Esta acción eliminará tu cuenta y todos tus datos. ¿Continuar?')
+    if (!confirmar) return
+
+    try {
+      await supabase.from('usuarios').delete().eq('id', user.id)
+      await supabase.auth.signOut()
+      alert('🗑️ Cuenta eliminada correctamente.')
+      window.location.href = '/'
+    } catch (error) {
+      console.error(error)
+      alert('❌ No se pudo eliminar la cuenta. Contacta al administrador.')
+    }
   }
 
   if (loading)
-    return (
-      <p className="p-6 text-gray-300 text-center animate-pulse">
-        Cargando perfil...
-      </p>
-    )
+    return <p className="p-6 text-gray-400 text-center animate-pulse">Cargando perfil...</p>
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-950 to-black text-white px-6 sm:px-10 md:px-16 lg:px-24 pt-24 pb-20">
@@ -107,201 +127,99 @@ export default function Perfil() {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7 }}
-        className="text-4xl font-bold text-center text-blue-400 mb-10 tracking-tight"
+        className="text-4xl font-bold text-center text-blue-400 mb-12 tracking-tight"
       >
-        Perfil de Usuario
+        Mi Perfil
       </motion.h1>
 
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.8 }}
-        className="max-w-4xl mx-auto space-y-10"
+        className="max-w-2xl mx-auto"
       >
-        {/* Datos del Usuario */}
-        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 shadow-2xl rounded-2xl">
-          <CardContent className="p-8 space-y-8">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-sm text-blue-400 uppercase font-semibold">
-                  Correo Electrónico
-                </h3>
-                <p className="text-lg mt-1 text-gray-200">{email}</p>
-              </div>
+        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 shadow-xl rounded-2xl">
+          <CardContent className="p-8 space-y-10">
 
-              <div>
-                <h3 className="text-sm text-blue-400 uppercase font-semibold">
-                  Miembro Desde
-                </h3>
-                <p className="text-lg mt-1 text-gray-200">{fecha}</p>
-              </div>
+            {/* Correo */}
+            <div>
+              <h3 className="text-sm text-blue-400 uppercase font-semibold mb-2">Correo electrónico</h3>
+              {editandoEmail ? (
+                <div className="flex flex-col sm:flex-row gap-4 items-center">
+                  <input
+                    type="email"
+                    value={nuevoEmail}
+                    onChange={(e) => setNuevoEmail(e.target.value)}
+                    className="w-full p-3 rounded-xl bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  />
+                  <div className="flex gap-2">
+                    <Button onClick={handleGuardarEmail} disabled={guardando} className="bg-blue-600 hover:bg-blue-700">
+                      <Save className="w-4 h-4 mr-1" /> Guardar
+                    </Button>
+                    <Button onClick={() => setEditandoEmail(false)} className="bg-gray-700 hover:bg-gray-800">
+                      <X className="w-4 h-4 mr-1" /> Cancelar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <p className="text-lg text-gray-200">{email}</p>
+                  <Button onClick={() => { setEditandoEmail(true); setNuevoEmail(email) }} className="bg-blue-600 hover:bg-blue-700">
+                    <Pencil className="w-4 h-4 mr-1" /> Editar
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Nombre */}
             <div>
-              <h3 className="text-sm text-blue-400 uppercase font-semibold mb-1">
-                Nombre del Usuario
-              </h3>
+              <h3 className="text-sm text-blue-400 uppercase font-semibold mb-2">Nombre de usuario</h3>
               {editandoNombre ? (
-                <div className="flex flex-col sm:flex-row gap-3 items-center">
+                <div className="flex flex-col sm:flex-row gap-4 items-center">
                   <input
                     type="text"
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value)}
-                    className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-blue-500"
+                    className="w-full p-3 rounded-xl bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                   />
                   <div className="flex gap-2">
-                    <Button
-                      onClick={handleGuardarNombre}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
+                    <Button onClick={handleGuardarNombre} disabled={guardando} className="bg-blue-600 hover:bg-blue-700">
                       <Save className="w-4 h-4 mr-1" /> Guardar
                     </Button>
-                    <Button
-                      onClick={() => setEditandoNombre(false)}
-                      className="bg-gray-600 hover:bg-gray-700"
-                    >
+                    <Button onClick={() => setEditandoNombre(false)} className="bg-gray-700 hover:bg-gray-800">
                       <X className="w-4 h-4 mr-1" /> Cancelar
                     </Button>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center justify-between">
-                  <p className="text-lg text-white">{nombre || 'No asignado'}</p>
-                  <Button
-                    onClick={() => setEditandoNombre(true)}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
+                  <p className="text-lg text-gray-200">{nombre || 'No asignado'}</p>
+                  <Button onClick={() => setEditandoNombre(true)} className="bg-blue-600 hover:bg-blue-700">
                     <Pencil className="w-4 h-4 mr-1" /> Editar
                   </Button>
                 </div>
               )}
             </div>
 
-            {/* UUID del ESP32 */}
+            {/* Fecha */}
             <div>
-              <h3 className="text-sm text-blue-400 uppercase font-semibold mb-1">
-                UUID del ESP32
-              </h3>
-              {editandoUUID ? (
-                <div className="flex flex-col sm:flex-row gap-3 items-center">
-                  <input
-                    type="text"
-                    value={uuidEsp32}
-                    onChange={(e) => setUuidEsp32(e.target.value)}
-                    className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-blue-500"
-                    placeholder="Ejemplo: a1b2c3d4-e5f6-7890..."
-                  />
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={handleGuardarUUID}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      <Save className="w-4 h-4 mr-1" /> Guardar
-                    </Button>
-                    <Button
-                      onClick={() => setEditandoUUID(false)}
-                      className="bg-gray-600 hover:bg-gray-700"
-                    >
-                      <X className="w-4 h-4 mr-1" /> Cancelar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <p className="text-lg text-white">{uuidEsp32 || 'No registrado'}</p>
-                  <Button
-                    onClick={() => setEditandoUUID(true)}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Pencil className="w-4 h-4 mr-1" /> Editar
-                  </Button>
-                </div>
-              )}
+              <h3 className="text-sm text-blue-400 uppercase font-semibold mb-2">Miembro desde</h3>
+              <p className="text-lg text-gray-300">{fecha}</p>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Circuitos */}
-        <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 shadow-2xl rounded-2xl">
-          <CardContent className="p-8 space-y-6">
-            <h3 className="text-2xl font-semibold text-blue-400 mb-4 flex items-center gap-2">
-              <Cpu className="w-6 h-6" /> Mis Circuitos
-            </h3>
-
-            {circuitos.length > 0 ? (
-              <div className="space-y-6">
-                {circuitos.map((circuito) => (
-                  <motion.div
-                    key={circuito.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="border border-gray-700 p-4 rounded-xl bg-gray-800/70"
-                  >
-                    <h4 className="text-sm text-blue-400 uppercase font-semibold mb-2">
-                      Circuito #{circuito.id.slice(0, 6)} •{' '}
-                      <span
-                        className={
-                          circuito.estado ? 'text-green-400' : 'text-red-400'
-                        }
-                      >
-                        {circuito.estado ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </h4>
-
-                    {editandoCircuito === circuito.id ? (
-                      <div className="flex flex-col sm:flex-row gap-3 items-center">
-                        <input
-                          type="text"
-                          value={circuito.nombre}
-                          onChange={(e) =>
-                            setCircuitos((prev) =>
-                              prev.map((c) =>
-                                c.id === circuito.id
-                                  ? { ...c, nombre: e.target.value }
-                                  : c
-                              )
-                            )
-                          }
-                          className="w-full p-3 rounded-lg bg-gray-700 text-white border border-gray-600 focus:ring-2 focus:ring-blue-500"
-                        />
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() =>
-                              handleGuardarCircuito(circuito.id, circuito.nombre)
-                            }
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            <Save className="w-4 h-4 mr-1" /> Guardar
-                          </Button>
-                          <Button
-                            onClick={() => setEditandoCircuito(null)}
-                            className="bg-gray-600 hover:bg-gray-700"
-                          >
-                            <X className="w-4 h-4 mr-1" /> Cancelar
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between">
-                        <p className="text-lg text-white">{circuito.nombre}</p>
-                        <Button
-                          onClick={() => setEditandoCircuito(circuito.id)}
-                          className="bg-blue-600 hover:bg-blue-700"
-                        >
-                          <Pencil className="w-4 h-4 mr-1" /> Editar
-                        </Button>
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
+            {/* Seguridad */}
+            <div className="pt-6 border-t border-gray-700">
+              <h3 className="text-sm text-blue-400 uppercase font-semibold mb-3">Seguridad</h3>
+              <div className="flex flex-wrap gap-3">
+                <Button onClick={handleCambiarContrasena} className="bg-blue-600 hover:bg-blue-700">
+                  <Lock className="w-4 h-4 mr-2" /> Cambiar contraseña
+                </Button>
+                <Button onClick={handleEliminarCuenta} className="bg-blue-600 hover:bg-blue-700">
+                  <Trash2 className="w-4 h-4 mr-2" /> Eliminar cuenta
+                </Button>
               </div>
-            ) : (
-              <p className="text-gray-400 text-center">
-                No tienes circuitos registrados.
-              </p>
-            )}
+            </div>
+
           </CardContent>
         </Card>
       </motion.div>
