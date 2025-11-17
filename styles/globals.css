@@ -86,3 +86,10 @@ body {
     @apply text-gray-300;
   }
 }
+
+.recharts-wrapper:focus {
+  outline: none !important;
+}
+svg:focus {
+  outline: none !important;
+}
