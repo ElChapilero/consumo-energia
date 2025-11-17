@@ -235,9 +235,12 @@ export default function Navbar() {
 
       {/* MENÚ MÓVIL */}
       <div
-        className={`md:hidden bg-gray-900/95 backdrop-blur-xl border-t border-gray-800 px-6 pt-4 pb-6 transition-all duration-300 ease-in-out ${
-          open ? 'max-h-[34rem] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
-        }`}
+        className={`md:hidden bg-gray-900/95 backdrop-blur-xl border-t border-gray-800 transition-all duration-300 ease-in-out
+  ${
+    open
+      ? 'px-6 pt-4 pb-6 max-h-[34rem] opacity-100'
+      : 'px-0 pt-0 pb-0 max-h-0 opacity-0 overflow-hidden'
+  }`}
       >
         <div className="flex flex-col space-y-3 pb-4 border-b border-gray-800">
           {links.map((link) => {

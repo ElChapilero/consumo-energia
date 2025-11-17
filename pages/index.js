@@ -32,14 +32,18 @@ export default function Home() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.8 }}
           viewport={{ once: true }}
-          className="space-x-4"
+          className="flex flex-col md:flex-row justify-center items-center gap-4 w-full"
         >
-          <a href="#" className="bg-blue-600 px-6 py-3 rounded-md font-semibold hover:bg-blue-500">
+          <a
+            href="#"
+            className="w-full md:w-auto mx-auto md:mx-0 bg-blue-600 px-6 py-3 rounded-md font-semibold hover:bg-blue-500 text-center"
+          >
             Descargar App
           </a>
+
           <a
             href="#servicios"
-            className="bg-gray-800 px-6 py-3 rounded-md font-semibold hover:bg-gray-700"
+            className="w-full md:w-auto mx-auto md:mx-0 border border-white px-6 py-3 rounded-md font-semibold text-white hover:bg-white hover:text-gray-900 text-center"
           >
             Ver servicios
           </a>
@@ -49,7 +53,7 @@ export default function Home() {
       {/* Sobre el producto */}
       <section
         id="sobre"
-        className="py-24 px-6 md:px-20 text-center bg-gradient-to-r from-gray-900 via-gray-800 to-black"
+        className="py-24 md:px-20 text-center bg-gradient-to-r from-gray-900 via-gray-800 to-black px-6"
       >
         <motion.h2
           initial={{ opacity: 0, y: 40 }}
@@ -76,7 +80,7 @@ export default function Home() {
       {/* Servicios */}
       <section
         id="servicios"
-        className="py-24 px-6 md:px-20 text-center bg-gradient-to-r from-blue-950 via-gray-900 to-black"
+        className="py-24 md:px-20 text-center bg-gradient-to-r from-blue-950 via-gray-900 to-black px-6"
       >
         <motion.h2
           initial={{ opacity: 0, y: 40 }}
@@ -120,7 +124,7 @@ export default function Home() {
       </section>
 
       {/* Call to Action final */}
-      <section className="py-24 text-center bg-gradient-to-r from-gray-900 via-blue-900 to-black">
+      <section className="py-24 text-center bg-gradient-to-r from-gray-900 via-blue-900 to-black px-6">
         <motion.h2
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -136,19 +140,20 @@ export default function Home() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.8 }}
           viewport={{ once: true }}
-          className="space-x-4"
+          className="flex flex-col md:flex-row justify-center items-center gap-4 w-full"
         >
           <a
             href="/register"
-            className="bg-blue-500 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-400"
-          >
-            Crear cuenta
-          </a>
-          <a
-            href="#"
-            className="border border-white px-6 py-3 rounded-md font-semibold text-white hover:bg-white hover:text-gray-900"
+            className="w-full md:w-auto mx-auto md:mx-0 bg-blue-500 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-400 text-center"
           >
             Descargar App
+          </a>
+
+          <a
+            href="#"
+            className="w-full md:w-auto mx-auto md:mx-0 border border-white px-6 py-3 rounded-md font-semibold text-white hover:bg-white hover:text-gray-900 text-center"
+          >
+            Ver servicios
           </a>
         </motion.div>
       </section>
