@@ -384,53 +384,62 @@ export default function Circuitos() {
   }
 
   /* ---------- Carga de energía (últimos 7 días) ---------- */
-  const cargarEnergiaSemanal = async () => {
-    if (!circuitos.length) return
-    const ids = modoGeneral ? circuitos.map((c) => c.id) : [selectedCircuit]
+const cargarEnergiaSemanal = async () => {
+  if (!circuitos.length) return
+  const ids = modoGeneral ? circuitos.map((c) => c.id) : [selectedCircuit]
 
-    const desde = new Date()
-    desde.setDate(desde.getDate() - 6)
-    desde.setHours(0, 0, 0, 0)
-    const desdeISO = desde.toISOString().split('T')[0]
+  // Fecha desde hace 6 días (incluye hoy)
+  const desde = new Date()
+  desde.setDate(desde.getDate() - 6)
+  desde.setHours(0, 0, 0, 0)
 
-    const { data, error } = await supabase
-      .from('consumos_horarios')
-      .select('fecha, energia, circuito_id')
-      .in('circuito_id', ids)
-      .gte('fecha', desdeISO)
+  // Formato ISO para consulta Supabase
+  const desdeISO = desde.toISOString().split('T')[0]
 
-    if (error) {
-      console.warn('Error cargarEnergiaSemanal:', error)
-      return
-    }
+  const { data, error } = await supabase
+    .from('consumos_horarios')
+    .select('fecha, energia, circuito_id')
+    .in('circuito_id', ids)
+    .gte('fecha', desdeISO)
 
-    // Sumar energía por día
-    const dias = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date()
-      d.setDate(d.getDate() - (6 - i))
-      const key = d.toISOString().split('T')[0]
-      return { fecha: key, energia: 0 }
-    })
-
-    data?.forEach((row) => {
-      const f = row.fecha
-      const idx = dias.findIndex((d) => d.fecha === f)
-      if (idx !== -1) dias[idx].energia += Number(row.energia || 0)
-    })
-
-    const max = Math.max(...dias.map((d) => d.energia))
-    const promedio = dias.reduce((a, b) => a + b.energia, 0) / 7
-
-    setViewData((prev) => ({
-      ...prev,
-      energia: dias.map((d) => ({ dia: d.fecha.slice(5), energia: d.energia })),
-      resumenDiario: {
-        max: max,
-        promedio: promedio,
-        estado: promedio > 0 ? 'Consumo activo' : 'Sin consumo',
-      },
-    }))
+  if (error) {
+    console.warn('Error cargarEnergiaSemanal:', error)
+    return
   }
+
+  // Crear arreglo de los últimos 7 días en la zona horaria de Bogotá
+  const dias = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - (6 - i))
+    const key = d
+      .toLocaleDateString('es-CO', { timeZone: 'America/Bogota' })
+      .split('/')
+      .reverse()
+      .join('-') // Convierte dd/mm/yyyy → yyyy-mm-dd
+    return { fecha: key, energia: 0 }
+  })
+
+  // Sumar energía por día
+  data?.forEach((row) => {
+    const f = row.fecha
+    const idx = dias.findIndex((d) => d.fecha === f)
+    if (idx !== -1) dias[idx].energia += Number(row.energia || 0)
+  })
+
+  const max = Math.max(...dias.map((d) => d.energia))
+  const promedio = dias.reduce((a, b) => a + b.energia, 0) / 7
+
+  setViewData((prev) => ({
+    ...prev,
+    energia: dias.map((d) => ({ dia: d.fecha.slice(5), energia: d.energia })),
+    resumenDiario: {
+      max,
+      promedio,
+      estado: promedio > 0 ? 'Consumo activo' : 'Sin consumo',
+    },
+  }))
+}
+
 
   /* ---------- Carga de costos por hora (día actual) ---------- */
   const cargarCostosPorHora = async () => {
