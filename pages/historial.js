@@ -15,7 +15,7 @@ import {
 } from 'recharts'
 
 export default function Historial() {
-  const today = new Date().toISOString().split('T')[0]
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' })
 
   const [tab, setTab] = useState('general')
   const [metrica, setMetrica] = useState('potencia')

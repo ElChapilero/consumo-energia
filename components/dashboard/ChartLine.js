@@ -16,15 +16,8 @@ import { useState } from 'react'
 export default function ChartLinePotencia({ data, dataKey = 'potencia', title }) {
   const { primary } = metricColors[dataKey] || metricColors.potencia
   const gradientId = `gradient-${dataKey}`
-  const [tooltipActive, setTooltipActive] = useState(false)
 
   return (
-    <div
-      className="chart-touch-lock flex-1"
-      onTouchStart={() => setTooltipActive(true)}   // activa tooltip al tocar
-      onTouchEnd={() => setTooltipActive(false)}   // desactiva al soltar
-      onTouchCancel={() => setTooltipActive(false)} // desactiva si el touch se cancela
-    >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -57,7 +50,6 @@ export default function ChartLinePotencia({ data, dataKey = 'potencia', title })
               />
 
               <Tooltip
-                active={tooltipActive} // ⬅️ controla la visibilidad del tooltip
                 contentStyle={{
                   backgroundColor: '#0f172a',
                   borderRadius: '10px',
@@ -83,6 +75,5 @@ export default function ChartLinePotencia({ data, dataKey = 'potencia', title })
           </ResponsiveContainer>
         </div>
       </motion.div>
-    </div>
   )
 }

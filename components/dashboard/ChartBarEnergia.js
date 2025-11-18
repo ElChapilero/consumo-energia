@@ -9,15 +9,8 @@ import { metricColors } from '@/constants/colors' // 👈 importamos la paleta
 export default function ChartBarEnergia({ data }) {
   const { primary, secondary } = metricColors.energia
   const gradientId = 'energiaGradient'
-  const [tooltipActive, setTooltipActive] = useState(false)
 
   return (
-    <div
-      className="chart-touch-lock flex-1"
-      onTouchStart={() => setTooltipActive(true)} // activa tooltip al tocar
-      onTouchEnd={() => setTooltipActive(false)} // desactiva al soltar
-      onTouchCancel={() => setTooltipActive(false)} // desactiva si el touch se cancela
-    >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -55,7 +48,6 @@ export default function ChartBarEnergia({ data }) {
                   />
 
                   <Tooltip
-                    active={tooltipActive}  // ⬅️ usa el estado
                     contentStyle={{
                       backgroundColor: '#1e293b',
                       borderRadius: '10px',
@@ -82,6 +74,5 @@ export default function ChartBarEnergia({ data }) {
           </CardContent>
         </Card>
       </motion.div>
-    </div>
   )
 }

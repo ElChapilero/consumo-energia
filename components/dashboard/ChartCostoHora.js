@@ -10,15 +10,8 @@ export default function ChartCostoHora({ data }) {
   // 🎨 Colores desde la paleta central
   const { primary, secondary } = metricColors.gasto
   const gradientId = 'costoGradient'
-  const [tooltipActive, setTooltipActive] = useState(false)
 
   return (
-    <div
-      className="chart-touch-lock flex-1"
-      onTouchStart={() => setTooltipActive(true)} // activa tooltip al tocar
-      onTouchEnd={() => setTooltipActive(false)} // desactiva al soltar
-      onTouchCancel={() => setTooltipActive(false)} // desactiva si el touch se cancela
-    >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -63,7 +56,6 @@ export default function ChartCostoHora({ data }) {
                   />
 
                   <Tooltip
-                    active={tooltipActive}
                     contentStyle={{
                       backgroundColor: '#1e293b',
                       borderRadius: '10px',
@@ -90,6 +82,5 @@ export default function ChartCostoHora({ data }) {
           </CardContent>
         </Card>
       </motion.div>
-    </div>
   )
 }

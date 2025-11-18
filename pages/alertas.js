@@ -15,6 +15,37 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 
+/* ---------------------------------------------
+   🔥 Zona horaria correcta: Colombia (UTC-5)
+----------------------------------------------*/
+const getFechaColombia = () => {
+  const formato = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Bogota',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+  return formato.format(new Date()) // YYYY-MM-DD
+}
+
+const toDateColombia = (fechaStr) => new Date(fechaStr + 'T00:00:00-05:00')
+
+/* ---------------------------------------------
+   📅 Días de la semana (fijos)
+----------------------------------------------*/
+const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+
+/* ---------------------------------------------
+   📌 Obtener el lunes de la semana de una fecha
+----------------------------------------------*/
+const obtenerLunes = (fecha) => {
+  const day = fecha.getDay()
+  const diffToMonday = day === 0 ? 6 : day - 1
+  const lunes = new Date(fecha)
+  lunes.setDate(fecha.getDate() - diffToMonday)
+  return lunes
+}
+
 export default function Alertas() {
   const [user, setUser] = useState(null)
   const [casas, setCasas] = useState([])
@@ -54,6 +85,7 @@ export default function Alertas() {
   /* ---------- Cargar casas y circuitos ---------- */
   const loadCasasYCircuitos = async (userId) => {
     if (!userId) return
+
     const { data: dispositivos, error: err1 } = await supabase
       .from('dispositivos')
       .select('id, nombre')
@@ -81,29 +113,41 @@ export default function Alertas() {
       .order('indice', { ascending: true })
 
     if (err2) console.warn('Error cargando circuitos:', err2)
-    setCircuitos(c || [])
 
+    setCircuitos(c || [])
     const primerCircuito = c?.find((cir) => cir.id_dispositivo === casaInicial)
     if (primerCircuito) setCircuitoSel(primerCircuito.id)
   }
 
-  /* ---------- Cargar datos semanales ---------- */
+  /* ---------- Cargar datos semanales (2 semanas + días vacíos) ---------- */
   useEffect(() => {
     if (!circuitoSel) return
 
     const fetchConsumos = async () => {
-      const hoy = new Date()
-      const fechaHoy = hoy.toISOString().split('T')[0]
-      const lunes = new Date(hoy)
-      const day = (hoy.getDay() + 6) % 7
-      lunes.setDate(hoy.getDate() - day)
-      const fechaLunes = lunes.toISOString().split('T')[0]
+      const hoyStr = getFechaColombia()
+      const hoy = toDateColombia(hoyStr)
 
+      // Semana actual
+      const lunesActual = obtenerLunes(hoy)
+      const fechaHoy = hoyStr
+      const fechaLunesActual = lunesActual.toISOString().split('T')[0]
+
+      // Semana anterior
+      const lunesAnterior = new Date(lunesActual)
+      lunesAnterior.setDate(lunesActual.getDate() - 7)
+
+      const domingoAnterior = new Date(lunesAnterior)
+      domingoAnterior.setDate(lunesAnterior.getDate() + 6)
+
+      const fechaLunesAnterior = lunesAnterior.toISOString().split('T')[0]
+      const fechaDomingoAnterior = domingoAnterior.toISOString().split('T')[0]
+
+      // Consulta ambas semanas
       const { data: consumos, error } = await supabase
         .from('consumos_horarios')
         .select(`fecha, ${metrica}`)
         .eq('circuito_id', circuitoSel)
-        .gte('fecha', fechaLunes)
+        .gte('fecha', fechaLunesAnterior)
         .lte('fecha', fechaHoy)
         .order('fecha', { ascending: true })
 
@@ -113,59 +157,77 @@ export default function Alertas() {
         return
       }
 
-      if (!consumos?.length) {
-        setData([])
-        return
+      // Agrupar por fecha
+      const grupos = {}
+      consumos.forEach((d) => {
+        if (!grupos[d.fecha]) grupos[d.fecha] = []
+        grupos[d.fecha].push(Number(d[metrica] || 0))
+      })
+
+      // Crear semana con días vacíos
+      const crearSemana = (fechaInicio) => {
+        const salida = []
+        for (let i = 0; i < 7; i++) {
+          const f = new Date(fechaInicio)
+          f.setDate(fechaInicio.getDate() + i)
+          const fechaStr = f.toISOString().split('T')[0]
+
+          const valores = grupos[fechaStr] || []
+          const promedio = valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0
+
+          salida.push({
+            dia: DIAS_SEMANA[i],
+            promedio: Number(promedio.toFixed(2)),
+          })
+        }
+        return salida
       }
 
-      const grouped = {}
-      consumos.forEach((d) => {
-        const fecha = d.fecha
-        if (!grouped[fecha]) grouped[fecha] = []
-        grouped[fecha].push(Number(d[metrica] || 0))
-      })
+      const semanaAnterior = crearSemana(lunesAnterior)
+      const semanaActual = crearSemana(lunesActual)
 
-      const transformados = Object.entries(grouped).map(([fecha, valores]) => {
-        const promedio = valores.reduce((a, b) => a + b, 0) / valores.length
-        const actual = valores[valores.length - 1]
-        const nombreDia = new Date(fecha).toLocaleDateString('es-CO', { weekday: 'long' })
-        return {
-          dia: nombreDia.charAt(0).toUpperCase() + nombreDia.slice(1),
-          promedio: Number(promedio.toFixed(2)),
-          actual: Number(actual.toFixed(2)),
-        }
-      })
+      // 🔥 Unir ambas semanas en un único array compatible con ChartLineAlertas
+      const dataFormateada = semanaAnterior.map((d, i) => ({
+        dia: d.dia,
+        promedio: d.promedio, // semana anterior
+        actual: semanaActual[i]?.promedio ?? 0, // semana actual
+      }))
 
-      setData(transformados)
+      setData(dataFormateada)
     }
 
     fetchConsumos()
   }, [circuitoSel, metrica])
 
-  /* ---------- Cargar alertas ---------- */
+  /* ---------- Cargar alertas (2 semanas) ---------- */
   useEffect(() => {
     if (!circuitoSel) return
     setAlertas([])
 
     const fetchAlertas = async () => {
-      const hoy = new Date()
-      const fechaHoy = hoy.toISOString().split('T')[0]
-      const lunes = new Date(hoy)
-      const day = (hoy.getDay() + 6) % 7
-      lunes.setDate(hoy.getDate() - day)
-      const fechaLunes = lunes.toISOString().split('T')[0]
+      const hoyStr = getFechaColombia()
+      const hoy = toDateColombia(hoyStr)
+
+      const lunesActual = obtenerLunes(hoy)
+
+      const lunesAnterior = new Date(lunesActual)
+      lunesAnterior.setDate(lunesActual.getDate() - 7)
+
+      const fechaInicio = lunesAnterior.toISOString().split('T')[0]
+      const fechaFin = hoyStr
 
       const { data: a, error } = await supabase
         .from('alertas')
         .select('fecha,hora,metrica,valor_actual,valor_referencia,tipo,mensaje')
         .eq('circuito_id', circuitoSel)
-        .gte('fecha', fechaLunes)
-        .lte('fecha', fechaHoy)
-        .ilike('metrica', metrica)
+        .gte('fecha', fechaInicio)
+        .lte('fecha', fechaFin)
+        .eq('metrica', metrica)
         .order('fecha', { ascending: true })
         .order('hora', { ascending: true })
 
       if (error) console.warn('Error cargando alertas:', error)
+
       setAlertas(a || [])
     }
 

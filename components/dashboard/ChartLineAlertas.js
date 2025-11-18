@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   ResponsiveContainer,
   AreaChart,
@@ -15,14 +15,27 @@ import TooltipInfo from './TooltipInfo'
 import tooltipData from './tooltipData'
 
 export default function ChartLineAlertas({ data = [], title = 'Tendencia', metrica = 'potencia' }) {
-  // 🎨 Colores según la métrica
+  // 🛠️ Normalizar data: garantizar array SIEMPRE
+  const safeData = useMemo(() => {
+    if (!Array.isArray(data)) {
+      console.warn('ChartLineAlertas recibió data inválida:', data)
+      return []
+    }
+
+    // Estándar de estructura
+    return data.map((d) => ({
+      dia: d.dia ?? d.fecha ?? d.x ?? '',
+      promedio: Number(d.promedio ?? d.avg ?? 0),
+      actual: Number(d.actual ?? d.valor ?? d.y ?? 0),
+    }))
+  }, [data])
+
   const { primary, secondary } = metricColors[metrica] || metricColors.potencia
   const promedioColor = '#60a5fa'
 
-  const gradientIdPromedio = `gradient-promedio`
+  const gradientIdPromedio = `gradient-promedio-${metrica}`
   const gradientIdActual = `gradient-${metrica}-actual`
 
-  // 🔢 Asignar número de tooltip según la métrica
   const tooltipMap = {
     voltaje: 8,
     corriente: 9,
@@ -34,39 +47,36 @@ export default function ChartLineAlertas({ data = [], title = 'Tendencia', metri
 
   const tooltipId = tooltipMap[metrica] || 11
   const tooltipInfo = tooltipData[tooltipId]
-  const [tooltipActive, setTooltipActive] = useState(false)
 
   return (
-    <div
-      className="chart-touch-lock flex-1"
-      onTouchStart={() => setTooltipActive(true)} // activa tooltip al tocar
-      onTouchEnd={() => setTooltipActive(false)} // desactiva al soltar
-      onTouchCancel={() => setTooltipActive(false)} // desactiva si el touch se cancela
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      viewport={{ once: true }}
+      className="w-full h-[350px] sm:h-[380px] md:h-[400px] flex flex-col"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        viewport={{ once: true }}
-        className="w-full h-[350px] sm:h-[380px] md:h-[400px] flex flex-col"
-      >
-        {/* 🔹 Título + Tooltip */}
-        <div className="flex justify-center items-center gap-2 mb-4">
-          <h3 className="text-xl font-semibold text-blue-300 tracking-wide">{tooltipInfo.text}</h3>
-          <TooltipInfo numero={tooltipId} />
-        </div>
+      {/* Título + Tooltip */}
+      <div className="flex justify-center items-center gap-2 mb-4">
+        <h3 className="text-xl font-semibold text-blue-300 tracking-wide">{tooltipInfo.text}</h3>
+        <TooltipInfo numero={tooltipId} />
+      </div>
 
-        <div className="flex-1 w-full">
+      <div className="flex-1 w-full">
+        {/* 🛡️ Si no hay datos → evitar crash */}
+        {safeData.length === 0 ? (
+          <div className="flex justify-center items-center h-full text-slate-400">
+            No hay datos disponibles
+          </div>
+        ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
+            <AreaChart data={safeData} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}>
               <defs>
-                {/* Gradiente promedio */}
                 <linearGradient id={gradientIdPromedio} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={promedioColor} stopOpacity={0.6} />
                   <stop offset="95%" stopColor={promedioColor} stopOpacity={0} />
                 </linearGradient>
 
-                {/* Gradiente actual */}
                 <linearGradient id={gradientIdActual} x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor={secondary} stopOpacity={0.5} />
                   <stop offset="95%" stopColor={secondary} stopOpacity={0} />
@@ -83,7 +93,6 @@ export default function ChartLineAlertas({ data = [], title = 'Tendencia', metri
               />
 
               <Tooltip
-                active={tooltipActive}
                 contentStyle={{
                   backgroundColor: '#0f172a',
                   borderRadius: '10px',
@@ -100,31 +109,25 @@ export default function ChartLineAlertas({ data = [], title = 'Tendencia', metri
                 labelStyle={{ color: '#93c5fd', fontWeight: 'bold' }}
               />
 
-              {/* Línea de promedio */}
               <Area
                 type="monotone"
                 dataKey="promedio"
                 stroke={promedioColor}
                 fill={`url(#${gradientIdPromedio})`}
                 strokeWidth={3}
-                isAnimationActive
-                animationDuration={800}
               />
 
-              {/* Línea actual */}
               <Area
                 type="monotone"
                 dataKey="actual"
                 stroke={secondary}
                 fill={`url(#${gradientIdActual})`}
                 strokeWidth={3}
-                isAnimationActive
-                animationDuration={800}
               />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
-      </motion.div>
-    </div>
+        )}
+      </div>
+    </motion.div>
   )
 }
