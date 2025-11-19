@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabaseClient'
 import ChartLineHistorial from '@/components/dashboard/ChartLineHistorial'
 import ChartLineHistorialMovil from '@/components/dashboard/ChartLineHistorialMovil'
+import HistorialTableMovil from '@/components/dashboard/HistorialTableMovil'
 import ResponsiveChart from '@/components/dashboard/ResponsiveChart'
 import {
   LineChart,
@@ -267,13 +268,13 @@ export default function Historial() {
       <div className="flex justify-end">
         <button
           onClick={exportToCSV}
-          className="bg-green-600 px-5 py-3 rounded-xl font-semibold hover:bg-green-700 transition"
+          className="bg-blue-600 px-5 py-3 rounded-xl font-semibold hover:bg-blue-700 transition"
         >
           Descargar CSV
         </button>
       </div>
 
-      {/* 🔸 Tabla */}
+      {/* 🔸 Tabla RESPONSIVE - MOBILE & DESKTOP */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -284,70 +285,78 @@ export default function Historial() {
           Historial de Consumos
         </h2>
 
-        {data.length ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-lg text-left text-gray-300">
-              <thead className="bg-gray-700 text-gray-200 uppercase text-xs">
-                <tr>
-                  {[
-                    'Fecha',
-                    'Potencia (W)',
-                    'Energía (kWh)',
-                    'Voltaje (V)',
-                    'Corriente (A)',
-                    'Frecuencia (Hz)',
-                    'Factor Potencia',
-                    'Gasto ($COP)',
-                    'Alertas',
-                  ].map((h) => (
-                    <th key={h} className="px-4 py-3">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
+        {/* 📱 MOBILE TABLE */}
+        <div className="block mobile:hidden mt-6">
+          <HistorialTableMovil data={data} metrica={metrica} />
+        </div>
 
-              <tbody>
-                {data.map((d, i) => (
-                  <tr
-                    key={i}
-                    className={`border-b border-gray-700 ${
-                      i % 2 === 0 ? 'bg-gray-800/40' : 'bg-gray-900/30'
-                    } hover:bg-gray-800/60 transition`}
-                  >
-                    <td className="px-4 py-2">{d.fecha}</td>
-                    <td className="px-4 py-2">{Number(d.potencia).toFixed(2)}</td>
-                    <td className="px-4 py-2">{Number(d.energia).toFixed(2)}</td>
-                    <td className="px-4 py-2">{Number(d.voltaje).toFixed(2)}</td>
-                    <td className="px-4 py-2">{Number(d.corriente).toFixed(2)}</td>
-                    <td className="px-4 py-2">{Number(d.frecuencia).toFixed(2)}</td>
-                    <td className="px-4 py-2">{Number(d.factor_potencia).toFixed(2)}</td>
-
-                    {/* 💰 Gasto con color verde */}
-                    <td className="px-4 py-2 text-green-400 font-semibold">
-                      ${Number(d.gasto).toFixed(2)}
-                    </td>
-
-                    {/* 🚨 Alertas con color condicional */}
-                    <td
-                      className={`px-4 py-2 font-medium ${
-                        d.alerta?.toLowerCase().includes('alerta')
-                          ? 'text-red-400'
-                          : 'text-green-400'
-                      }`}
-                    >
-                      {d.alerta}
-                    </td>
+        {/* 🖥️ DESKTOP TABLE – tu tabla original tal cual */}
+        <div className="hidden mobile:block mt-6">
+          {data.length ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-lg text-left text-gray-300">
+                <thead className="bg-gray-700 text-gray-200 uppercase text-xs">
+                  <tr>
+                    {[
+                      'Fecha',
+                      'Potencia (W)',
+                      'Energía (kWh)',
+                      'Voltaje (V)',
+                      'Corriente (A)',
+                      'Frecuencia (Hz)',
+                      'Factor Potencia',
+                      'Gasto ($COP)',
+                      'Alertas',
+                    ].map((h) => (
+                      <th key={h} className="px-4 py-3">
+                        {h}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-gray-400 text-center">
-            No hay datos disponibles para este rango de fechas.
-          </p>
-        )}
+                </thead>
+
+                <tbody>
+                  {data.map((d, i) => (
+                    <tr
+                      key={i}
+                      className={`border-b border-gray-700 ${
+                        i % 2 === 0 ? 'bg-gray-800/40' : 'bg-gray-900/30'
+                      } hover:bg-gray-800/60 transition`}
+                    >
+                      <td className="px-4 py-2">{d.fecha}</td>
+                      <td className="px-4 py-2">{Number(d.potencia).toFixed(2)}</td>
+                      <td className="px-4 py-2">{Number(d.energia).toFixed(2)}</td>
+                      <td className="px-4 py-2">{Number(d.voltaje).toFixed(2)}</td>
+                      <td className="px-4 py-2">{Number(d.corriente).toFixed(2)}</td>
+                      <td className="px-4 py-2">{Number(d.frecuencia).toFixed(2)}</td>
+                      <td className="px-4 py-2">{Number(d.factor_potencia).toFixed(2)}</td>
+
+                      {/* 💰 Gasto con color verde */}
+                      <td className="px-4 py-2 text-green-400 font-semibold">
+                        ${Number(d.gasto).toFixed(2)}
+                      </td>
+
+                      {/* 🚨 Alertas con color condicional */}
+                      <td
+                        className={`px-4 py-2 font-medium ${
+                          d.alerta?.toLowerCase().includes('alerta')
+                            ? 'text-red-400'
+                            : 'text-green-400'
+                        }`}
+                      >
+                        {d.alerta}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-400 text-center">
+              No hay datos disponibles para este rango de fechas.
+            </p>
+          )}
+        </div>
       </motion.div>
     </div>
   )

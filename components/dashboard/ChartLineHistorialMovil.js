@@ -22,15 +22,16 @@ export default function ChartLineHistorialMovil({ data = [], metrica = 'potencia
 
     return data.map((d) => ({
       fecha: d.fecha ?? d.dia ?? '',
-      promedio: Number(d.promedio ?? 0),
       valor: Number(d[metrica] ?? d.valor ?? 0),
     }))
   }, [data, metrica])
 
   /* ---------------------- COLORES ---------------------- */
   const { primary, secondary } = metricColors[metrica] || metricColors.potencia
-  const promedioColor = '#60a5fa'
 
+  const gradientAct = `grad-hist-${metrica}`
+
+  /* ---------------------- TOOLTIP INFO ---------------------- */
   const tooltipMap = {
     voltaje: 14,
     corriente: 15,
@@ -43,9 +44,6 @@ export default function ChartLineHistorialMovil({ data = [], metrica = 'potencia
 
   const tooltipId = tooltipMap[metrica] || 17
   const tooltipInfo = tooltipData[tooltipId]
-
-  const gradientProm = `grad-hist-prom-${metrica}`
-  const gradientAct = `grad-hist-act-${metrica}`
 
   /* ---------------------- MODAL ---------------------- */
   const [modalOpen, setModalOpen] = useState(false)
@@ -76,7 +74,7 @@ export default function ChartLineHistorialMovil({ data = [], metrica = 'potencia
   /* ---------------------- RENDER ---------------------- */
   return (
     <>
-      {/* ===== PREVIEW (NO INTERACTIVO) ===== */}
+      {/* ===== PREVIEW ===== */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -99,7 +97,7 @@ export default function ChartLineHistorialMovil({ data = [], metrica = 'potencia
               </span>
             </div>
 
-            {/* --- PREVIEW LIMPIO --- */}
+            {/* --- PREVIEW LIMPIO (SOLO 1 LÍNEA) --- */}
             <div className="flex-1 min-h-0 relative">
               <div
                 className="absolute inset-0"
@@ -109,27 +107,14 @@ export default function ChartLineHistorialMovil({ data = [], metrica = 'potencia
                 }}
               >
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={safeData} margin={{ left: -15, right: -15, top: 0, bottom: 0 }}>
+                  <AreaChart data={safeData} margin={{ left: -15, right: -15 }}>
                     <defs>
-                      <linearGradient id={gradientProm} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={promedioColor} stopOpacity={0.35} />
-                        <stop offset="100%" stopColor={promedioColor} stopOpacity={0} />
-                      </linearGradient>
-
                       <linearGradient id={gradientAct} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={secondary} stopOpacity={0.30} />
                         <stop offset="100%" stopColor={secondary} stopOpacity={0} />
                       </linearGradient>
                     </defs>
 
-                    {/* ❌ Sin ejes, sin grid, sin tooltip */}
-                    <Area
-                      type="monotone"
-                      dataKey="promedio"
-                      stroke={promedioColor}
-                      strokeWidth={2}
-                      fill={`url(#${gradientProm})`}
-                    />
                     <Area
                       type="monotone"
                       dataKey="valor"
@@ -145,7 +130,7 @@ export default function ChartLineHistorialMovil({ data = [], metrica = 'potencia
         </Card>
       </motion.div>
 
-      {/* ===== MODAL DETALLADO ===== */}
+      {/* ===== MODAL ===== */}
       <AnimatePresence>
         {modalOpen && (
           <motion.div
@@ -173,10 +158,6 @@ export default function ChartLineHistorialMovil({ data = [], metrica = 'potencia
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={safeData}>
                       <defs>
-                        <linearGradient id={gradientProm} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={promedioColor} stopOpacity={0.4} />
-                          <stop offset="100%" stopColor={promedioColor} stopOpacity={0} />
-                        </linearGradient>
                         <linearGradient id={gradientAct} x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor={secondary} stopOpacity={0.35} />
                           <stop offset="100%" stopColor={secondary} stopOpacity={0} />
@@ -196,19 +177,9 @@ export default function ChartLineHistorialMovil({ data = [], metrica = 'potencia
                           color: '#e2e8f0',
                           fontSize: '0.9rem',
                         }}
-                        formatter={(value, name) => {
-                          if (name === 'promedio') return [value.toFixed(2), 'Promedio']
-                          return [value.toFixed(2), 'Valor']
-                        }}
+                        formatter={(value) => [value.toFixed(2), tooltipInfo.text]}
                       />
 
-                      <Area
-                        type="monotone"
-                        dataKey="promedio"
-                        stroke={promedioColor}
-                        strokeWidth={3}
-                        fill={`url(#${gradientProm})`}
-                      />
                       <Area
                         type="monotone"
                         dataKey="valor"

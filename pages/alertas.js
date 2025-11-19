@@ -356,47 +356,92 @@ export default function Alertas() {
         <h2 className="text-xl font-semibold text-blue-300 mb-4 tracking-wide">
           Alertas recientes
         </h2>
-        {alertas.length ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-lg text-left text-gray-300">
-              <thead className="bg-gray-700 text-gray-200 uppercase text-xs">
-                <tr>
-                  <th className="px-4 py-3">Fecha</th>
-                  <th className="px-4 py-3">Hora</th>
-                  <th className="px-4 py-3">Métrica</th>
-                  <th className="px-4 py-3">Valor Actual</th>
-                  <th className="px-4 py-3">Referencia</th>
-                  <th className="px-4 py-3">Tipo</th>
-                  <th className="px-4 py-3">Mensaje</th>
-                </tr>
-              </thead>
-              <tbody>
-                {alertas.map((a, i) => (
-                  <tr
-                    key={i}
-                    className={`border-b border-gray-300 ${
-                      a.tipo === 'Alto'
-                        ? 'bg-red-900/40'
-                        : a.tipo === 'Bajo'
-                        ? 'bg-yellow-900/40'
-                        : 'bg-gray-800/40'
-                    }`}
-                  >
-                    <td className="px-4 py-2">{a.fecha}</td>
-                    <td className="px-4 py-2">{a.hora}</td>
-                    <td className="px-4 py-2">{a.metrica}</td>
-                    <td className="px-4 py-2">{Number(a.valor_actual).toFixed(2)}</td>
-                    <td className="px-4 py-2">{Number(a.valor_referencia).toFixed(2)}</td>
-                    <td className="px-4 py-2 font-semibold">{a.tipo}</td>
-                    <td className="px-4 py-2">{a.mensaje}</td>
+
+        {/* ===== VISTA MOBILE ===== */}
+        <div className="block mobile:hidden space-y-4">
+          {alertas.map((a, i) => (
+            <div
+              key={i}
+              className={`p-4 rounded-xl shadow-md border 
+          ${
+            a.tipo === 'Alto'
+              ? 'bg-red-900/40 border-red-700'
+              : a.tipo === 'Bajo'
+              ? 'bg-yellow-900/40 border-yellow-700'
+              : 'bg-gray-800/40 border-gray-700'
+          }`}
+            >
+              <div className="flex justify-between mb-2">
+                <span className="text-gray-300 font-semibold">{a.fecha}</span>
+                <span className="text-gray-400">{a.hora}</span>
+              </div>
+
+              <div className="text-gray-200">
+                <p>
+                  <span className="font-bold">Métrica:</span> {a.metrica}
+                </p>
+                <p>
+                  <span className="font-bold">Valor actual:</span>{' '}
+                  {Number(a.valor_actual).toFixed(2)}
+                </p>
+                <p>
+                  <span className="font-bold">Referencia:</span>{' '}
+                  {Number(a.valor_referencia).toFixed(2)}
+                </p>
+                <p>
+                  <span className="font-bold">Tipo:</span>{' '}
+                  <span className="font-semibold">{a.tipo}</span>
+                </p>
+                <p className="mt-2 text-gray-300">{a.mensaje}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ===== VISTA DESKTOP ===== */}
+        <div className="hidden mobile:block">
+          {alertas.length ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-lg text-left text-gray-300">
+                <thead className="bg-gray-700 text-gray-200 uppercase text-xs">
+                  <tr>
+                    <th className="px-4 py-3">Fecha</th>
+                    <th className="px-4 py-3">Hora</th>
+                    <th className="px-4 py-3">Métrica</th>
+                    <th className="px-4 py-3">Valor Actual</th>
+                    <th className="px-4 py-3">Referencia</th>
+                    <th className="px-4 py-3">Tipo</th>
+                    <th className="px-4 py-3">Mensaje</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-gray-300 text-center">No hay alertas recientes.</p>
-        )}
+                </thead>
+                <tbody>
+                  {alertas.map((a, i) => (
+                    <tr
+                      key={i}
+                      className={`border-b border-gray-300 ${
+                        a.tipo === 'Alto'
+                          ? 'bg-red-900/40'
+                          : a.tipo === 'Bajo'
+                          ? 'bg-yellow-900/40'
+                          : 'bg-gray-800/40'
+                      }`}
+                    >
+                      <td className="px-4 py-2">{a.fecha}</td>
+                      <td className="px-4 py-2">{a.hora}</td>
+                      <td className="px-4 py-2">{a.metrica}</td>
+                      <td className="px-4 py-2">{Number(a.valor_actual).toFixed(2)}</td>
+                      <td className="px-4 py-2">{Number(a.valor_referencia).toFixed(2)}</td>
+                      <td className="px-4 py-2 font-semibold">{a.tipo}</td>
+                      <td className="px-4 py-2">{a.mensaje}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-300 text-center">No hay alertas recientes.</p>
+          )}
+        </div>
       </div>
     </div>
   )
