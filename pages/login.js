@@ -64,28 +64,40 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+    <div
+      className="
+    min-h-screen 
+    flex items-center justify-center
+    bg-gradient-to-br from-gray-900 via-gray-800 to-black
+    px-6 mobile:px-0
+    pt-[80px]  /* 🔥 evita que el login quede tapado por el navbar */
+  "
+    >
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-gray-900 p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-700"
+        className="
+        bg-gray-900 p-6 mobile:p-8 
+        rounded-2xl shadow-xl w-full 
+        max-w-sm mobile:max-w-md 
+        border border-gray-700
+      "
       >
-        <h2 className="text-3xl font-bold text-center text-blue-400 mb-6">
-          Iniciar Sesión
-        </h2>
+        <h2 className="text-3xl font-bold text-center text-blue-400 mb-6">Iniciar Sesión</h2>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-gray-300 mb-1">Correo</label>
             <input
-              type="text" // cambiar a text para evitar alertas nativas
+              type="text"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value.replace(/\s+/g, ''))} // ⬅ elimina espacios en vivo
               placeholder="ejemplo@email.com"
               className="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
           <div>
             <label className="block text-gray-300 mb-1">Contraseña</label>
             <input

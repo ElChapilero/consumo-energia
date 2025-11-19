@@ -56,10 +56,8 @@ export default function Perfil() {
         .eq('id', user.id)
         .maybeSingle()
 
-      if (existente)
-        await supabase.from('usuarios').update({ nombre }).eq('id', user.id)
-      else
-        await supabase.from('usuarios').insert([{ id: user.id, nombre }])
+      if (existente) await supabase.from('usuarios').update({ nombre }).eq('id', user.id)
+      else await supabase.from('usuarios').insert([{ id: user.id, nombre }])
 
       alert('✅ Nombre actualizado correctamente.')
       setEditandoNombre(false)
@@ -122,7 +120,7 @@ export default function Perfil() {
     return <p className="p-6 text-gray-400 text-center animate-pulse">Cargando perfil...</p>
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-950 to-black text-white px-6 sm:px-10 mobile:px-16 lg:px-24 pt-24 pb-20">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-950 to-black text-white px-6 mobile:px-16 sm:px-10 lg:px-24 pt-24 pb-20">
       <motion.h1
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -140,86 +138,124 @@ export default function Perfil() {
       >
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 shadow-xl rounded-2xl">
           <CardContent className="p-8 space-y-10">
-
-            {/* Correo */}
+            {/* ---------------- CORREO ---------------- */}
             <div>
-              <h3 className="text-sm text-blue-400 uppercase font-semibold mb-2">Correo electrónico</h3>
+              <h3 className="text-sm text-blue-400 uppercase font-semibold mb-2">
+                Correo electrónico
+              </h3>
+
               {editandoEmail ? (
-                <div className="flex flex-col sm:flex-row gap-4 items-center">
+                <div className="flex flex-col gap-4">
                   <input
                     type="email"
                     value={nuevoEmail}
                     onChange={(e) => setNuevoEmail(e.target.value)}
-                    className="w-full p-3 rounded-xl bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    className="w-full p-3 rounded-xl bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 break-all"
                   />
-                  <div className="flex gap-2">
-                    <Button onClick={handleGuardarEmail} disabled={guardando} className="bg-blue-600 hover:bg-blue-700">
+
+                  {/* Botones responsivos */}
+                  <div className="flex flex-col mobile:flex-row gap-3 w-full">
+                    <Button
+                      onClick={handleGuardarEmail}
+                      disabled={guardando}
+                      className="bg-blue-600 hover:bg-blue-700 w-full mobile:w-auto"
+                    >
                       <Save className="w-4 h-4 mr-1" /> Guardar
                     </Button>
-                    <Button onClick={() => setEditandoEmail(false)} className="bg-gray-700 hover:bg-gray-800">
+                    <Button
+                      onClick={() => setEditandoEmail(false)}
+                      className="bg-gray-700 hover:bg-gray-800 w-full mobile:w-auto"
+                    >
                       <X className="w-4 h-4 mr-1" /> Cancelar
                     </Button>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-between">
-                  <p className="text-lg text-gray-200">{email}</p>
-                  <Button onClick={() => { setEditandoEmail(true); setNuevoEmail(email) }} className="bg-blue-600 hover:bg-blue-700">
+                <div className="flex flex-col mobile:flex-row mobile:items-center mobile:justify-between gap-2">
+                  <p className="text-lg text-gray-200 break-all">{email}</p>
+                  <Button
+                    onClick={() => {
+                      setEditandoEmail(true)
+                      setNuevoEmail(email)
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 w-full mobile:w-auto"
+                  >
                     <Pencil className="w-4 h-4 mr-1" /> Editar
                   </Button>
                 </div>
               )}
             </div>
 
-            {/* Nombre */}
+            {/* ---------------- NOMBRE ---------------- */}
             <div>
-              <h3 className="text-sm text-blue-400 uppercase font-semibold mb-2">Nombre de usuario</h3>
+              <h3 className="text-sm text-blue-400 uppercase font-semibold mb-2">
+                Nombre de usuario
+              </h3>
+
               {editandoNombre ? (
-                <div className="flex flex-col sm:flex-row gap-4 items-center">
+                <div className="flex flex-col gap-4">
                   <input
                     type="text"
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value)}
-                    className="w-full p-3 rounded-xl bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    className="w-full p-3 rounded-xl bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                  <div className="flex gap-2">
-                    <Button onClick={handleGuardarNombre} disabled={guardando} className="bg-blue-600 hover:bg-blue-700">
+
+                  <div className="flex flex-col mobile:flex-row gap-3 w-full">
+                    <Button
+                      onClick={handleGuardarNombre}
+                      disabled={guardando}
+                      className="bg-blue-600 hover:bg-blue-700 w-full mobile:w-auto"
+                    >
                       <Save className="w-4 h-4 mr-1" /> Guardar
                     </Button>
-                    <Button onClick={() => setEditandoNombre(false)} className="bg-gray-700 hover:bg-gray-800">
+                    <Button
+                      onClick={() => setEditandoNombre(false)}
+                      className="bg-gray-700 hover:bg-gray-800 w-full mobile:w-auto"
+                    >
                       <X className="w-4 h-4 mr-1" /> Cancelar
                     </Button>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-between">
-                  <p className="text-lg text-gray-200">{nombre || 'No asignado'}</p>
-                  <Button onClick={() => setEditandoNombre(true)} className="bg-blue-600 hover:bg-blue-700">
+                <div className="flex flex-col mobile:flex-row mobile:items-center mobile:justify-between gap-2">
+                  <p className="text-lg text-gray-200 break-all">{nombre || 'No asignado'}</p>
+                  <Button
+                    onClick={() => setEditandoNombre(true)}
+                    className="bg-blue-600 hover:bg-blue-700 w-full mobile:w-auto"
+                  >
                     <Pencil className="w-4 h-4 mr-1" /> Editar
                   </Button>
                 </div>
               )}
             </div>
 
-            {/* Fecha */}
+            {/* ---------------- FECHA ---------------- */}
             <div>
               <h3 className="text-sm text-blue-400 uppercase font-semibold mb-2">Miembro desde</h3>
               <p className="text-lg text-gray-300">{fecha}</p>
             </div>
 
-            {/* Seguridad */}
+            {/* ---------------- SEGURIDAD ---------------- */}
             <div className="pt-6 border-t border-gray-700">
               <h3 className="text-sm text-blue-400 uppercase font-semibold mb-3">Seguridad</h3>
-              <div className="flex flex-wrap gap-3">
-                <Button onClick={handleCambiarContrasena} className="bg-blue-600 hover:bg-blue-700">
+
+              <div className="flex flex-col mobile:flex-row gap-3 w-full">
+                <Button
+                  onClick={handleCambiarContrasena}
+                  className="bg-blue-600 hover:bg-blue-700 w-full mobile:w-auto"
+                >
                   <Lock className="w-4 h-4 mr-2" /> Cambiar contraseña
                 </Button>
-                <Button onClick={handleEliminarCuenta} className="bg-blue-600 hover:bg-blue-700">
+
+                <Button
+                  onClick={handleEliminarCuenta}
+                  className="bg-red-600 hover:bg-red-700 w-full mobile:w-auto"
+                >
                   <Trash2 className="w-4 h-4 mr-2" /> Eliminar cuenta
                 </Button>
               </div>
             </div>
-
           </CardContent>
         </Card>
       </motion.div>
