@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabaseClient'
 import ChartLineHistorial from '@/components/dashboard/ChartLineHistorial'
+import ChartLineHistorialMovil from '@/components/dashboard/ChartLineHistorialMovil'
+import ResponsiveChart from '@/components/dashboard/ResponsiveChart'
 import {
   LineChart,
   Line,
@@ -248,7 +250,18 @@ export default function Historial() {
       </motion.div>
 
       {/* 🔸 Gráfica */}
-      <ChartLineHistorial data={data} metrica={metrica} />
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.8 }}
+        viewport={{ once: true }}
+        className="w-full mt-10"
+      >
+        <ResponsiveChart
+          mobile={<ChartLineHistorialMovil data={data} metrica={metrica} />}
+          desktop={<ChartLineHistorial data={data} metrica={metrica} />}
+        />
+      </motion.div>
 
       {/* 🔸 Botón CSV */}
       <div className="flex justify-end">

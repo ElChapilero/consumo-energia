@@ -4,11 +4,15 @@ import { Card, CardContent } from '@/components/ui/card'
 import { motion } from 'framer-motion'
 import ResumenPotencia from '@/components/dashboard/ResumenPotencia'
 import ChartLine from '@/components/dashboard/ChartLine'
+import ChartLinePotenciaMobile from '@/components/dashboard/ChartLinePotenciaMobile'
 import ChartBarEnergia from '@/components/dashboard/ChartBarEnergia'
+import ChartBarEnergiaMobile from '@/components/dashboard/ChartBarEnergiaMobile'
 import ResumenEnergia from '@/components/dashboard/ResumenEnergia'
 import ChartCostoHora from '@/components/dashboard/ChartCostoHora'
+import ChartCostoHoraMobile from '@/components/dashboard/ChartCostoHoraMobile'
 import ResumenCostoHora from '@/components/dashboard/ResumenCostoHora'
 import IndicadoresBasicos from '@/components/dashboard/IndicadoresBasicos'
+import ResponsiveChart from '@/components/dashboard/ResponsiveChart'
 
 /* ---------- Constantes ---------- */
 const WINDOW_MINUTES = 10
@@ -628,7 +632,7 @@ export default function Circuitos() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.8 }}
         viewport={{ once: true }}
-        className="grid mobile:grid-cols-10 gap-6 h-full"
+        className="grid mobile:grid-cols-10 gap-6 mt-10"
       >
         <div className="mobile:col-span-3 h-full">
           <ResumenPotencia
@@ -638,16 +642,24 @@ export default function Circuitos() {
           />
         </div>
         <div className="mobile:col-span-7 h-full">
-          <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl h-full">
-            <CardContent className="p-6 h-full">
-              <ChartLine
-                data={viewData.potencia}
-                dataKey="potencia"
-                title="Potencia Activa (W)"
-                color="#4ade80"
-              />
-            </CardContent>
-          </Card>
+          <div className="mobile:col-span-7 h-full">
+            <ResponsiveChart
+              mobile={
+                <ChartLinePotenciaMobile
+                  data={viewData.potencia}
+                  dataKey="potencia"
+                  title="Potencia Activa (W)"
+                />
+              }
+              desktop={
+                <ChartLine
+                  data={viewData.potencia}
+                  dataKey="potencia"
+                  title="Potencia Activa (W)"
+                />
+              }
+            />
+          </div>
         </div>
       </motion.div>
 
@@ -666,7 +678,10 @@ export default function Circuitos() {
           />
         </div>
         <div className="mobile:col-span-7 h-full">
-          <ChartBarEnergia data={viewData.energia} />
+          <ResponsiveChart
+            mobile={<ChartBarEnergiaMobile data={viewData.energia} />}
+            desktop={<ChartBarEnergia data={viewData.energia} />}
+          />
         </div>
       </motion.div>
 
@@ -685,7 +700,10 @@ export default function Circuitos() {
           />
         </div>
         <div className="mobile:col-span-7 h-full">
-          <ChartCostoHora data={viewData.costosPorHora || []} />
+          <ResponsiveChart
+            mobile={<ChartCostoHoraMobile data={viewData.costosPorHora || []} />}
+            desktop={<ChartCostoHora data={viewData.costosPorHora || []} />}
+          />
         </div>
       </motion.div>
     </div>

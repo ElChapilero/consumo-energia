@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { supabase } from '@/lib/supabaseClient'
 import ChartLineAlertas from '@/components/dashboard/ChartLineAlertas'
-
+import ChartLineAlertasMovil from '@/components/dashboard/ChartLineAlertasMovil'
+import ResponsiveChart from '@/components/dashboard/ResponsiveChart'
 import {
   LineChart,
   Line,
@@ -325,13 +326,30 @@ export default function Alertas() {
       </motion.div>
 
       {/* ---------- Gráfico semanal ---------- */}
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl rounded-2xl p-8">
-        <ChartLineAlertas
-          data={data}
-          title={`Tendencia semanal de ${metrica}`}
-          metrica={metrica} // 👈 usa la métrica actual para el color
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.8 }}
+        viewport={{ once: true }}
+        className="w-full mt-10"
+      >
+        <ResponsiveChart
+          mobile={
+            <ChartLineAlertasMovil
+              data={data}
+              title={`Tendencia semanal de ${metrica}`}
+              metrica={metrica}
+            />
+          }
+          desktop={
+            <ChartLineAlertas
+              data={data}
+              title={`Tendencia semanal de ${metrica}`}
+              metrica={metrica}
+            />
+          }
         />
-      </div>
+      </motion.div>
 
       {/* ---------- Alertas ---------- */}
       <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl rounded-2xl p-8">

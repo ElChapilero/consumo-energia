@@ -9,16 +9,16 @@ export default function ResumenCostoHora({ max, promedio, estado }) {
         <h3 className="text-xl font-semibold text-blue-300 mb-4 tracking-wide text-center">
           Resumen Costo
         </h3>
-        <div className="flex flex-col gap-6 w-full flex-1 justify-center">
-          <div className="bg-zinc-900/60 rounded-lg p-4 flex flex-col items-center shadow-inner w-full">
+        <div className="flex flex-col justify-between flex-1 gap-4 h-full">
+          <div className="bg-zinc-900/60 rounded-lg p-3 flex flex-col items-center shadow-inner flex-grow-0">
             <span className="text-xl text-blue-300">Máximo</span>
             <span className="text-lg font-bold text-gray-300">${max.toFixed(2)}</span>
           </div>
-          <div className="bg-zinc-900/60 rounded-lg p-4 flex flex-col items-center shadow-inner w-full">
+          <div className="bg-zinc-900/60 rounded-lg p-3 flex flex-col items-center shadow-inner flex-grow-0">
             <span className="text-xl text-blue-300">Promedio</span>
             <span className="text-lg font-bold text-gray-300">${promedio.toFixed(2)}</span>
           </div>
-          <div className="bg-zinc-900/60 rounded-lg p-4 flex flex-col items-center shadow-inner w-full">
+          <div className="bg-zinc-900/60 rounded-lg p-3 flex flex-col items-center shadow-inner flex-grow-0">
             <span className="text-xl text-blue-300">Estado</span>
             <span className="text-lg font-bold text-gray-300">{estado}</span>
           </div>

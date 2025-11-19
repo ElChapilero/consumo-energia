@@ -25,12 +25,9 @@ export default function ChartBarEnergia({ data }) {
               <TooltipInfo numero={4} />
             </h2>
 
-            <div className="flex-1">
+            <div className="flex-1 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={data}
-                  margin={{ top: 20, right: 20, left: -10, bottom: 10 }}
-                  barCategoryGap="20%"
+                <BarChart data={data} margin={{ top: 10, right: 20, bottom: 10, left: 0 }}
                 >
                   <defs>
                     <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -44,7 +41,7 @@ export default function ChartBarEnergia({ data }) {
                   <YAxis
                     stroke="#d1d5db"
                     fontSize={14}
-                    tickFormatter={(v) => `${v.toFixed(1)} kWh`}
+                    tickFormatter={(v) => `${v.toFixed(1)}`}
                   />
 
                   <Tooltip
