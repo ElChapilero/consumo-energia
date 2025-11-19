@@ -141,7 +141,7 @@ export default function Historial() {
   // 🔸 Render
   // ----------------------------------------------------
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white px-4 sm:px-8 md:px-16 lg:px-24 pt-24 pb-20 space-y-10">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white px-4 sm:px-8 mobile:px-16 lg:px-24 pt-24 pb-20 space-y-10">
       <h1 className="text-4xl font-bold text-center text-blue-400">Historial Energético</h1>
 
       {/* 🔸 Selects */}
@@ -150,10 +150,10 @@ export default function Historial() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         viewport={{ once: true }}
-        className="flex flex-col md:flex-row justify-center items-stretch gap-6 w-full mt-6"
+        className="flex flex-col mobile:flex-row justify-center items-stretch gap-6 w-full mt-6"
       >
         {/* Casa */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center w-full md:w-1/3 rounded-2xl p-6 flex flex-col justify-center">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center w-full mobile:w-1/3 rounded-2xl p-6 flex flex-col justify-center">
           <label className="text-xl font-semibold text-blue-300 mb-4 tracking-wide">
             Casa / Dispositivo
           </label>
@@ -174,7 +174,7 @@ export default function Historial() {
         </div>
 
         {/* Circuito */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center w-full md:w-1/3 rounded-2xl p-6 flex flex-col justify-center">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center w-full mobile:w-1/3 rounded-2xl p-6 flex flex-col justify-center">
           <label className="text-xl font-semibold text-blue-300 mb-4 tracking-wide">Circuito</label>
           <select
             value={tab}
@@ -195,7 +195,7 @@ export default function Historial() {
         </div>
 
         {/* Métrica */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center w-full md:w-1/3 rounded-2xl p-6 flex flex-col justify-center">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center w-full mobile:w-1/3 rounded-2xl p-6 flex flex-col justify-center">
           <label className="text-xl font-semibold text-blue-300 mb-4 tracking-wide">Métrica</label>
           <select
             value={metrica}
@@ -219,7 +219,7 @@ export default function Historial() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         viewport={{ once: true }}
-        className="flex flex-col md:flex-row justify-center items-center gap-6 mt-4 w-full"
+        className="flex flex-col mobile:flex-row justify-center items-center gap-6 mt-4 w-full"
       >
         {[
           { label: 'Desde', value: fechaInicio, onChange: setFechaInicio },
@@ -227,7 +227,7 @@ export default function Historial() {
         ].map(({ label, value, onChange }, idx) => (
           <div
             key={idx}
-            className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-xl px-6 py-4 flex flex-col items-center w-full md:w-1/4"
+            className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-xl px-6 py-4 flex flex-col items-center w-full mobile:w-1/4"
           >
             <label className="text-xl font-semibold text-blue-300 mb-4 tracking-wide">
               {label}

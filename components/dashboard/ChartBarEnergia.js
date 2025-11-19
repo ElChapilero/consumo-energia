@@ -16,13 +16,13 @@ export default function ChartBarEnergia({ data }) {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         viewport={{ once: true }}
-        className="w-full h-[350px] sm:h-[380px] md:h-[400px]"
+        className="w-full h-[350px] sm:h-[380px] md:h-[400px] flex flex-col"
       >
         <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl h-full">
           <CardContent className="p-6 h-full flex flex-col">
             <h2 className="text-xl font-semibold text-blue-300 mb-4 tracking-wide flex items-center justify-center gap-2">
               Energía (kWh) por Día
-              <TooltipInfo numero={4} /> {/* número 4 → corresponde a “Energía Semanal (kWh)” */}
+              <TooltipInfo numero={4} />
             </h2>
 
             <div className="flex-1">

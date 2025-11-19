@@ -122,7 +122,7 @@ export default function VincularCasa() {
     )
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white px-6 sm:px-12 md:px-20 pt-24 pb-20 space-y-12">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white px-6 sm:px-12 mobile:px-20 pt-24 pb-20 space-y-12">
       <motion.h1
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -178,7 +178,7 @@ export default function VincularCasa() {
                 </div>
 
                 {editandoDispositivo === disp.id && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 mobile:grid-cols-3 gap-4">
                     <input
                       type="text"
                       value={disp.nombre}
@@ -296,7 +296,7 @@ export default function VincularCasa() {
           <PlusCircle className="w-5 h-5" /> Vincular Nuevo Dispositivo
         </h3>
 
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid mobile:grid-cols-3 gap-4">
           <input
             type="text"
             value={nuevoNombre}

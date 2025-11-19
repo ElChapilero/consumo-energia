@@ -384,62 +384,61 @@ export default function Circuitos() {
   }
 
   /* ---------- Carga de energía (últimos 7 días) ---------- */
-const cargarEnergiaSemanal = async () => {
-  if (!circuitos.length) return
-  const ids = modoGeneral ? circuitos.map((c) => c.id) : [selectedCircuit]
+  const cargarEnergiaSemanal = async () => {
+    if (!circuitos.length) return
+    const ids = modoGeneral ? circuitos.map((c) => c.id) : [selectedCircuit]
 
-  // Fecha desde hace 6 días (incluye hoy)
-  const desde = new Date()
-  desde.setDate(desde.getDate() - 6)
-  desde.setHours(0, 0, 0, 0)
+    // Fecha desde hace 6 días (incluye hoy)
+    const desde = new Date()
+    desde.setDate(desde.getDate() - 6)
+    desde.setHours(0, 0, 0, 0)
 
-  // Formato ISO para consulta Supabase
-  const desdeISO = desde.toISOString().split('T')[0]
+    // Formato ISO para consulta Supabase
+    const desdeISO = desde.toISOString().split('T')[0]
 
-  const { data, error } = await supabase
-    .from('consumos_horarios')
-    .select('fecha, energia, circuito_id')
-    .in('circuito_id', ids)
-    .gte('fecha', desdeISO)
+    const { data, error } = await supabase
+      .from('consumos_horarios')
+      .select('fecha, energia, circuito_id')
+      .in('circuito_id', ids)
+      .gte('fecha', desdeISO)
 
-  if (error) {
-    console.warn('Error cargarEnergiaSemanal:', error)
-    return
+    if (error) {
+      console.warn('Error cargarEnergiaSemanal:', error)
+      return
+    }
+
+    // Crear arreglo de los últimos 7 días en la zona horaria de Bogotá
+    const dias = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date()
+      d.setDate(d.getDate() - (6 - i))
+      const key = d
+        .toLocaleDateString('es-CO', { timeZone: 'America/Bogota' })
+        .split('/')
+        .reverse()
+        .join('-') // Convierte dd/mm/yyyy → yyyy-mm-dd
+      return { fecha: key, energia: 0 }
+    })
+
+    // Sumar energía por día
+    data?.forEach((row) => {
+      const f = row.fecha
+      const idx = dias.findIndex((d) => d.fecha === f)
+      if (idx !== -1) dias[idx].energia += Number(row.energia || 0)
+    })
+
+    const max = Math.max(...dias.map((d) => d.energia))
+    const promedio = dias.reduce((a, b) => a + b.energia, 0) / 7
+
+    setViewData((prev) => ({
+      ...prev,
+      energia: dias.map((d) => ({ dia: d.fecha.slice(5), energia: d.energia })),
+      resumenDiario: {
+        max,
+        promedio,
+        estado: promedio > 0 ? 'Consumo activo' : 'Sin consumo',
+      },
+    }))
   }
-
-  // Crear arreglo de los últimos 7 días en la zona horaria de Bogotá
-  const dias = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date()
-    d.setDate(d.getDate() - (6 - i))
-    const key = d
-      .toLocaleDateString('es-CO', { timeZone: 'America/Bogota' })
-      .split('/')
-      .reverse()
-      .join('-') // Convierte dd/mm/yyyy → yyyy-mm-dd
-    return { fecha: key, energia: 0 }
-  })
-
-  // Sumar energía por día
-  data?.forEach((row) => {
-    const f = row.fecha
-    const idx = dias.findIndex((d) => d.fecha === f)
-    if (idx !== -1) dias[idx].energia += Number(row.energia || 0)
-  })
-
-  const max = Math.max(...dias.map((d) => d.energia))
-  const promedio = dias.reduce((a, b) => a + b.energia, 0) / 7
-
-  setViewData((prev) => ({
-    ...prev,
-    energia: dias.map((d) => ({ dia: d.fecha.slice(5), energia: d.energia })),
-    resumenDiario: {
-      max,
-      promedio,
-      estado: promedio > 0 ? 'Consumo activo' : 'Sin consumo',
-    },
-  }))
-}
-
 
   /* ---------- Carga de costos por hora (día actual) ---------- */
   const cargarCostosPorHora = async () => {
@@ -491,7 +490,7 @@ const cargarEnergiaSemanal = async () => {
 
   /* ---------- UI ---------- */
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white px-4 sm:px-8 md:px-16 lg:px-24 pt-24 pb-20 space-y-10">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white px-4 sm:px-8 mobile:px-16 lg:px-24 pt-24 pb-20 space-y-10">
       <motion.h1
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -509,10 +508,10 @@ const cargarEnergiaSemanal = async () => {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         viewport={{ once: true }}
-        className="flex flex-col md:flex-row justify-center items-stretch gap-6 w-full mt-6 flex-wrap px-0"
+        className="flex flex-col mobile:flex-row justify-center items-stretch gap-6 w-full mt-6 flex-wrap px-0"
       >
         {/* ---------- Select de Casa / Dispositivo ---------- */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center w-full md:flex-1 rounded-2xl flex flex-col justify-center p-6 hover:shadow-2xl transition-all">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center w-full mobile:flex-1 rounded-2xl flex flex-col justify-center p-6 hover:shadow-2xl transition-all">
           <label className="text-xl font-semibold text-blue-300 mb-4 tracking-wide">
             Casa / Dispositivo
           </label>
@@ -547,9 +546,8 @@ const cargarEnergiaSemanal = async () => {
         </div>
 
         {/* ---------- Select de Circuito ---------- */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center w-full md:flex-1 rounded-2xl flex flex-col justify-center p-6 hover:shadow-2xl transition-all">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center w-full mobile:flex-1 rounded-2xl flex flex-col justify-center p-6 hover:shadow-2xl transition-all">
           <label className="text-xl font-semibold text-blue-300 mb-4 tracking-wide">Circuito</label>
-          {/* ---------- Select de Circuito ---------- */}
           <select
             value={!circuitos.length ? '' : modoGeneral ? 'general' : selectedCircuit || ''}
             onChange={(e) => {
@@ -595,17 +593,8 @@ const cargarEnergiaSemanal = async () => {
 
         {/* ---------- Botón Encender / Apagar ---------- */}
         <div
-          onClick={() => {
-            if (modoGeneral) {
-              const algunEncendido = Object.values(circuitStateRef.current).some(Boolean)
-              toggleTodosCircuitos(!algunEncendido)
-            } else if (selectedCircuit) {
-              const estadoActual = circuitStateRef.current[selectedCircuit]
-              toggleCircuito(selectedCircuit, estadoActual)
-            }
-          }}
-          className={`cursor-pointer w-full md:flex-1 h-32 rounded-2xl flex flex-col justify-center text-center
-    shadow-xl transition-all transform hover:scale-105
+          className={`cursor-pointer w-full mobile:flex-1 rounded-2xl flex flex-col justify-center items-center p-6
+    text-center shadow-xl transition-all transform hover:scale-105
     ${
       modoGeneral
         ? Object.values(circuitStateRef.current).some(Boolean)
@@ -639,16 +628,16 @@ const cargarEnergiaSemanal = async () => {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.8 }}
         viewport={{ once: true }}
-        className="grid md:grid-cols-10 gap-6 h-full"
+        className="grid mobile:grid-cols-10 gap-6 h-full"
       >
-        <div className="md:col-span-3 h-full">
+        <div className="mobile:col-span-3 h-full">
           <ResumenPotencia
             max={viewData.resumen.max}
             promedio={viewData.resumen.promedio}
             estado={viewData.resumen.estado}
           />
         </div>
-        <div className="md:col-span-7 h-full">
+        <div className="mobile:col-span-7 h-full">
           <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl h-full">
             <CardContent className="p-6 h-full">
               <ChartLine
@@ -662,22 +651,21 @@ const cargarEnergiaSemanal = async () => {
         </div>
       </motion.div>
 
-      {/* Energía / Costos: si quieres que se calculen desde tu vista (consumos_horarios_...) puedes añadir una carga similar a la original */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.8 }}
         viewport={{ once: true }}
-        className="grid md:grid-cols-10 gap-6 mt-10"
+        className="grid mobile:grid-cols-10 gap-6 mt-10"
       >
-        <div className="md:col-span-3">
+        <div className="mobile:col-span-3 h-full">
           <ResumenEnergia
             max={(viewData.resumenDiario.max || 0).toFixed(2)}
             promedio={(viewData.resumenDiario.promedio || 0).toFixed(2)}
             estado={viewData.resumenDiario.estado}
           />
         </div>
-        <div className="md:col-span-7">
+        <div className="mobile:col-span-7 h-full">
           <ChartBarEnergia data={viewData.energia} />
         </div>
       </motion.div>
@@ -687,16 +675,16 @@ const cargarEnergiaSemanal = async () => {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.8 }}
         viewport={{ once: true }}
-        className="grid md:grid-cols-10 gap-6 mt-10"
+        className="grid mobile:grid-cols-10 gap-6 mt-10"
       >
-        <div className="md:col-span-3">
+        <div className="mobile:col-span-3 h-full">
           <ResumenCostoHora
             max={viewData.resumenCosto.max}
             promedio={viewData.resumenCosto.promedio}
             estado={viewData.resumenCosto.estado}
           />
         </div>
-        <div className="md:col-span-7">
+        <div className="mobile:col-span-7 h-full">
           <ChartCostoHora data={viewData.costosPorHora || []} />
         </div>
       </motion.div>

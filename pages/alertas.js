@@ -252,10 +252,10 @@ export default function Alertas() {
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         viewport={{ once: true }}
-        className="flex flex-col md:flex-row justify-center items-stretch gap-6 w-full mt-6"
+        className="flex flex-col mobile:flex-row justify-center items-stretch gap-6 w-full mt-6"
       >
         {/* Casa / Dispositivo */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center rounded-2xl p-6 w-full md:w-1/3">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center rounded-2xl p-6 w-full mobile:w-1/3">
           <label className="text-xl font-semibold text-blue-300 mb-4 tracking-wide block">
             Casa / Dispositivo
           </label>
@@ -281,7 +281,7 @@ export default function Alertas() {
         </div>
 
         {/* Circuito */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center rounded-2xl p-6 w-full md:w-1/3">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center rounded-2xl p-6 w-full mobile:w-1/3">
           <label className="text-xl font-semibold text-blue-300 mb-4 tracking-wide block">
             Circuito
           </label>
@@ -305,7 +305,7 @@ export default function Alertas() {
         </div>
 
         {/* Métrica */}
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center rounded-2xl p-6 w-full md:w-1/3">
+        <div className="bg-gradient-to-br from-gray-800 to-gray-900 shadow-xl text-center rounded-2xl p-6 w-full mobile:w-1/3">
           <label className="text-xl font-semibold text-blue-300 mb-4 tracking-wide block">
             Métrica
           </label>

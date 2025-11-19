@@ -118,7 +118,7 @@ export default function Navbar() {
           </div>
 
           {/* LINKS (PC) */}
-          <div className="hidden md:flex flex-1 justify-center space-x-8 items-center">
+          <div className="hidden mobile:flex flex-1 justify-center space-x-8 items-center">
             {links.map((link) => {
               const isActive = currentPath === link.href
               return (
@@ -136,19 +136,18 @@ export default function Navbar() {
           </div>
 
           {/* PERFIL (PC) */}
-          <div className="hidden md:flex items-center space-x-6" ref={perfilRef}>
+          <div className="hidden mobile:flex items-center space-x-6" ref={perfilRef}>
             {user ? (
               <div className="relative">
                 <button
                   onClick={() => setMenuPerfil((s) => !s)}
                   className="flex items-center gap-2 px-4 py-2 rounded-full 
-  border border-blue-500/40 bg-gray-900/40 
-  hover:border-blue-400 hover:bg-gray-800/60 transition-all shadow-sm"
+                  border border-blue-500/40 bg-gray-900/40 
+                  hover:border-blue-400 hover:bg-gray-800/60 transition-all shadow-sm"
                 >
                   <span className="text-gray-200 font-medium">
                     {perfil?.nombre || user.email?.split('@')[0]}
                   </span>
-
                   <Settings className="w-5 h-5 text-blue-400" />
                 </button>
 
@@ -221,7 +220,7 @@ export default function Navbar() {
           </div>
 
           {/* MENÚ MÓVIL BOTÓN */}
-          <div className="md:hidden flex items-center">
+          <div className="mobile:hidden flex items-center">
             <button
               onClick={() => setOpen((s) => !s)}
               className="text-gray-200 focus:outline-none"
@@ -235,12 +234,12 @@ export default function Navbar() {
 
       {/* MENÚ MÓVIL */}
       <div
-        className={`md:hidden bg-gray-900/95 backdrop-blur-xl border-t border-gray-800 transition-all duration-300 ease-in-out
-  ${
-    open
-      ? 'px-6 pt-4 pb-6 max-h-[34rem] opacity-100'
-      : 'px-0 pt-0 pb-0 max-h-0 opacity-0 overflow-hidden'
-  }`}
+        className={`mobile:hidden bg-gray-900/95 backdrop-blur-xl border-t border-gray-800 transition-all duration-300 ease-in-out
+      ${
+        open
+          ? 'px-6 pt-4 pb-6 max-h-[34rem] opacity-100'
+          : 'px-0 pt-0 pb-0 max-h-0 opacity-0 overflow-hidden'
+      }`}
       >
         <div className="flex flex-col space-y-3 pb-4 border-b border-gray-800">
           {links.map((link) => {

@@ -12,7 +12,7 @@ export default function Home() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
-          className="text-4xl md:text-6xl font-bold mb-4 text-blue-400 leading-tight text-center"
+          className="text-4xl mobile:text-6xl font-bold mb-4 text-blue-400 leading-tight text-center"
         >
           Visualiza tu consumo <br /> energético en todo momento
         </motion.h1>
@@ -22,7 +22,7 @@ export default function Home() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.8 }}
           viewport={{ once: true }}
-          className="text-lg md:text-xl text-gray-300 mb-8"
+          className="text-lg mobile:text-xl text-gray-300 mb-8"
         >
           EcoEnergi pone la información a tu alcance.
         </motion.p>
@@ -32,18 +32,18 @@ export default function Home() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.8 }}
           viewport={{ once: true }}
-          className="flex flex-col md:flex-row justify-center items-center gap-4 w-full"
+          className="flex flex-col mobile:flex-row justify-center items-center gap-4 w-full"
         >
           <a
             href="#"
-            className="w-full md:w-auto mx-auto md:mx-0 bg-blue-600 px-6 py-3 rounded-md font-semibold hover:bg-blue-500 text-center"
+            className="w-full mobile:w-auto mx-auto mobile:mx-0 bg-blue-600 px-6 py-3 rounded-md font-semibold hover:bg-blue-500 text-center"
           >
             Descargar App
           </a>
 
           <a
             href="#servicios"
-            className="w-full md:w-auto mx-auto md:mx-0 border border-white px-6 py-3 rounded-md font-semibold text-white hover:bg-white hover:text-gray-900 text-center"
+            className="w-full mobile:w-auto mx-auto mobile:mx-0 border border-white px-6 py-3 rounded-md font-semibold text-white hover:bg-white hover:text-gray-900 text-center"
           >
             Ver servicios
           </a>
@@ -53,7 +53,7 @@ export default function Home() {
       {/* Sobre el producto */}
       <section
         id="sobre"
-        className="py-24 md:px-20 text-center bg-gradient-to-r from-gray-900 via-gray-800 to-black px-6"
+        className="py-24 mobile:px-20 text-center bg-gradient-to-r from-gray-900 via-gray-800 to-black px-6"
       >
         <motion.h2
           initial={{ opacity: 0, y: 40 }}
@@ -80,7 +80,7 @@ export default function Home() {
       {/* Servicios */}
       <section
         id="servicios"
-        className="py-24 md:px-20 text-center bg-gradient-to-r from-blue-950 via-gray-900 to-black px-6"
+        className="py-24 mobile:px-20 text-center bg-gradient-to-r from-blue-950 via-gray-900 to-black px-6"
       >
         <motion.h2
           initial={{ opacity: 0, y: 40 }}
@@ -92,7 +92,7 @@ export default function Home() {
           Nuestros servicios
         </motion.h2>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid mobile:grid-cols-2 lg:grid-cols-4 gap-8">
           {[
             {
               title: 'Consumo Total',
@@ -140,18 +140,18 @@ export default function Home() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.8 }}
           viewport={{ once: true }}
-          className="flex flex-col md:flex-row justify-center items-center gap-4 w-full"
+          className="flex flex-col mobile:flex-row justify-center items-center gap-4 w-full"
         >
           <a
             href="/register"
-            className="w-full md:w-auto mx-auto md:mx-0 bg-blue-500 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-400 text-center"
+            className="w-full mobile:w-auto mx-auto mobile:mx-0 bg-blue-500 text-white px-6 py-3 rounded-md font-semibold hover:bg-blue-400 text-center"
           >
             Descargar App
           </a>
 
           <a
             href="#"
-            className="w-full md:w-auto mx-auto md:mx-0 border border-white px-6 py-3 rounded-md font-semibold text-white hover:bg-white hover:text-gray-900 text-center"
+            className="w-full mobile:w-auto mx-auto mobile:mx-0 border border-white px-6 py-3 rounded-md font-semibold text-white hover:bg-white hover:text-gray-900 text-center"
           >
             Ver servicios
           </a>

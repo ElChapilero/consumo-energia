@@ -5,7 +5,7 @@ import TooltipInfo from './TooltipInfo' // 👈 añadido
 
 export default function IndicadoresBasicos({ voltaje, corriente, frecuencia }) {
   return (
-    <div className="grid md:grid-cols-3 gap-6 mt-10">
+    <div className="grid mobile:grid-cols-3 gap-6 mt-10">
       {/* Voltaje */}
       <Card className="bg-gradient-to-br from-gray-800 to-gray-900 border-none shadow-xl">
         <CardContent className="p-6 flex flex-col items-center">
