@@ -314,7 +314,15 @@ export default function VincularCasa() {
           <select
             value={nuevoEstrato}
             onChange={(e) => setNuevoEstrato(e.target.value)}
-            className="bg-gray-800 text-white p-3 rounded-xl w-full"
+            className="bg-gray-800 text-white p-3 rounded-xl w-full appearance-none"
+            style={{
+              backgroundImage:
+                'linear-gradient(45deg, transparent 50%, #60a5fa 50%), linear-gradient(135deg, #60a5fa 50%, transparent 50%)',
+              backgroundPosition:
+                'calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px)',
+              backgroundSize: '5px 5px, 5px 5px',
+              backgroundRepeat: 'no-repeat',
+            }}
           >
             <option value="">Selecciona estrato</option>
             {estratos.map((e) => (

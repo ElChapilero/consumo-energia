@@ -271,7 +271,15 @@ export default function Alertas() {
               const c = circuitos.find((cir) => cir.id_dispositivo === nuevaCasa)
               if (c) setCircuitoSel(c.id)
             }}
-            className="bg-gray-800 text-gray-300  rounded-2xl px-4 py-3 w-full font-semibold cursor-pointer"
+            className="bg-gray-800 text-gray-300  rounded-2xl px-4 py-3 w-full font-semibold cursor-pointer appearance-none"
+            style={{
+              backgroundImage:
+                'linear-gradient(45deg, transparent 50%, #60a5fa 50%), linear-gradient(135deg, #60a5fa 50%, transparent 50%)',
+              backgroundPosition:
+                'calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px)',
+              backgroundSize: '5px 5px, 5px 5px',
+              backgroundRepeat: 'no-repeat',
+            }}
           >
             {casas.map((c) => (
               <option key={c.id} value={c.id}>
@@ -293,7 +301,15 @@ export default function Alertas() {
               setData([])
               setAlertas([])
             }}
-            className="bg-gray-800 text-gray-300 rounded-2xl px-4 py-3 w-full font-semibold cursor-pointer"
+            className="bg-gray-800 text-gray-300 rounded-2xl px-4 py-3 w-full font-semibold cursor-pointer  appearance-none"
+            style={{
+              backgroundImage:
+                'linear-gradient(45deg, transparent 50%, #60a5fa 50%), linear-gradient(135deg, #60a5fa 50%, transparent 50%)',
+              backgroundPosition:
+                'calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px)',
+              backgroundSize: '5px 5px, 5px 5px',
+              backgroundRepeat: 'no-repeat',
+            }}
           >
             {circuitos
               .filter((c) => c.id_dispositivo === casaSel)
@@ -313,7 +329,15 @@ export default function Alertas() {
           <select
             value={metrica}
             onChange={(e) => setMetrica(e.target.value)}
-            className="bg-gray-800 text-gray-300 rounded-2xl px-4 py-3 w-full font-semibold cursor-pointer"
+            className="bg-gray-800 text-gray-300 rounded-2xl px-4 py-3 w-full font-semibold cursor-pointer  appearance-none"
+            style={{
+              backgroundImage:
+                'linear-gradient(45deg, transparent 50%, #60a5fa 50%), linear-gradient(135deg, #60a5fa 50%, transparent 50%)',
+              backgroundPosition:
+                'calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px)',
+              backgroundSize: '5px 5px, 5px 5px',
+              backgroundRepeat: 'no-repeat',
+            }}
           >
             <option value="potencia">Potencia</option>
             <option value="energia">Energía</option>

@@ -167,6 +167,14 @@ export default function Historial() {
               setTab('general')
             }}
             className="bg-gray-800/80 text-gray-300 font-semibold rounded-2xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition-all hover:bg-gray-800 shadow-md cursor-pointer appearance-none"
+            style={{
+              backgroundImage:
+                'linear-gradient(45deg, transparent 50%, #60a5fa 50%), linear-gradient(135deg, #60a5fa 50%, transparent 50%)',
+              backgroundPosition:
+                'calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px)',
+              backgroundSize: '5px 5px, 5px 5px',
+              backgroundRepeat: 'no-repeat',
+            }}
           >
             {casas.map((c) => (
               <option key={c.id} value={c.id}>
@@ -186,6 +194,14 @@ export default function Historial() {
             className={`${
               sinCircuitos ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-800'
             } bg-gray-800/80 text-gray-300 font-semibold rounded-2xl px-4 py-3 text-base focus:outline-none w-full shadow-md appearance-none`}
+            style={{
+              backgroundImage:
+                'linear-gradient(45deg, transparent 50%, #60a5fa 50%), linear-gradient(135deg, #60a5fa 50%, transparent 50%)',
+              backgroundPosition:
+                'calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px)',
+              backgroundSize: '5px 5px, 5px 5px',
+              backgroundRepeat: 'no-repeat',
+            }}
           >
             <option value="general"> General (todos los circuitos)</option>
             {!sinCircuitos &&
@@ -204,6 +220,14 @@ export default function Historial() {
             value={metrica}
             onChange={(e) => setMetrica(e.target.value)}
             className="bg-gray-800/80 text-gray-300 font-semibold rounded-2xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 w-full transition-all hover:bg-gray-800 shadow-md cursor-pointer appearance-none"
+            style={{
+              backgroundImage:
+                'linear-gradient(45deg, transparent 50%, #60a5fa 50%), linear-gradient(135deg, #60a5fa 50%, transparent 50%)',
+              backgroundPosition:
+                'calc(100% - 20px) calc(1em + 2px), calc(100% - 15px) calc(1em + 2px)',
+              backgroundSize: '5px 5px, 5px 5px',
+              backgroundRepeat: 'no-repeat',
+            }}
           >
             <option value="potencia">Potencia (W)</option>
             <option value="energia">Energía (kWh)</option>
