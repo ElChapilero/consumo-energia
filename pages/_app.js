@@ -1,33 +1,58 @@
 import '@/styles/globals.css'
 import Navbar from '@/components/Navbar'
 import { supabase } from '@/lib/supabaseClient'
-import { SessionContextProvider } from '@supabase/auth-helpers-react'
+import { SessionContextProvider, useSession } from '@supabase/auth-helpers-react'
 import { useEffect, useState } from 'react'
-import { ToastProvider } from '@/components/ToastContext' // <-- Importar aquí
+import { ToastProvider } from '@/components/ToastContext'
+import { useRouter } from 'next/router'
 
-function MyApp({ Component, pageProps }) {
-  const [hydrated, setHydrated] = useState(false)
+const rutasProtegidas = [
+  '/dashboard',
+  '/alertas',
+  '/circuitos',
+  '/historial',
+  '/perfil',
+  '/vincularCasa',
+]
 
-  // Evita que se muestre la app hasta que React esté listo
+function AuthGuard({ children }) {
+  const router = useRouter()
+  const session = useSession()
+  const [checking, setChecking] = useState(true)
+
   useEffect(() => {
-    setHydrated(true)
-  }, [])
+    async function check() {
+      const requiereAuth = rutasProtegidas.includes(router.pathname)
 
-  if (!hydrated) {
+      if (requiereAuth && !session) {
+        router.replace('/login')
+      }
+
+      setChecking(false)
+    }
+
+    check()
+  }, [router.pathname, session])
+
+  if (checking) {
     return (
-      <div
-        className="w-full h-screen flex items-center justify-center bg-black text-gray-400"
-      >
+      <div className="w-full h-screen flex items-center justify-center bg-black text-gray-400">
         Cargando...
       </div>
     )
   }
 
+  return children
+}
+
+function MyApp({ Component, pageProps }) {
   return (
     <SessionContextProvider supabaseClient={supabase}>
-      <ToastProvider> {/* <-- Envolvemos toda la app */}
-        <Navbar />
-        <Component {...pageProps} />
+      <ToastProvider>
+        <AuthGuard>
+          <Navbar />
+          <Component {...pageProps} />
+        </AuthGuard>
       </ToastProvider>
     </SessionContextProvider>
   )

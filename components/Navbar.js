@@ -83,8 +83,7 @@ export default function Navbar() {
     } finally {
       setOpen(false)
       setMenuPerfil(false)
-      // si quieres redirigir luego del logout:
-      // router.push('/login')
+      router.push('/')
     }
   }
 
